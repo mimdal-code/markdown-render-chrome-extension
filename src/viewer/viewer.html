@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Markdown Viewer</title>
+<link rel="stylesheet" href="viewer.css" />
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Navigation">
+      <div class="sidebar-tabs" role="tablist">
+        <button class="sb-tab active" data-pane="toc" role="tab" aria-selected="true">
+          <span class="ico">☰</span><span>TOC</span>
+        </button>
+        <button class="sb-tab" data-pane="files" role="tab" aria-selected="false" disabled title="Coming soon">
+          <span class="ico">📁</span><span>Files</span>
+        </button>
+      </div>
+      <div class="sidebar-body">
+        <nav class="pane pane-toc" id="toc" aria-label="Table of contents"></nav>
+        <div class="pane pane-files" id="files" hidden>
+          <div class="empty">
+            <div class="empty-ico">📁</div>
+            <div class="empty-title">File browser</div>
+            <div class="empty-sub">Not implemented yet.</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="toolbar" role="toolbar" aria-label="Viewer toolbar">
+        <button class="icon-btn" id="toggle-sidebar" title="Toggle sidebar (Ctrl+B)" aria-label="Toggle sidebar">
+          <span>☰</span>
+        </button>
+
+        <label class="ctrl">
+          <span>Width</span>
+          <select id="width">
+            <option value="narrow">Narrow</option>
+            <option value="normal">Normal</option>
+            <option value="wide">Wide</option>
+          </select>
+        </label>
+        <label class="ctrl">
+          <span>Theme</span>
+          <select id="theme">
+            <option value="light">Light</option>
+            <option value="dark">Dark</option>
+            <option value="sepia">Sepia</option>
+          </select>
+        </label>
+        <label class="ctrl">
+          <span>Direction</span>
+          <select id="dir">
+            <option value="auto">Auto</option>
+            <option value="rtl">RTL</option>
+            <option value="ltr">LTR</option>
+          </select>
+        </label>
+        <label class="ctrl">
+          <input type="checkbox" id="tag" />
+          <span>Per-block bidi</span>
+        </label>
+        <label class="ctrl">
+          <span>Size</span>
+          <input type="range" id="size" min="14" max="22" step="1" value="16" />
+        </label>
+      </header>
+
+      <!-- Scrollable region: scrollbar hugs the far-right edge of the page -->
+      <div class="main-scroll" id="main-scroll">
+        <article id="content" class="markdown-body" aria-live="polite"></article>
+      </div>
+    </main>
+  </div>
+
+  <script src="../lib/markdown.js"></script>
+  <script src="../lib/highlight.js"></script>
+  <script src="../lib/direction.js"></script>
+  <script src="viewer.js"></script>
+</body>
+</html>

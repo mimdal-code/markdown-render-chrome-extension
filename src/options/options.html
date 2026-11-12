@@ -1,0 +1,213 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="utf-8" />
+<title>Markdown RTL/LTR — Options</title>
+<style>
+  :root {
+    --bg:#fff; --fg:#111418; --muted:#6b7280; --card:#f4f5f7;
+    --bd:#d8dce1; --accent:#2563eb; --ok:#16a34a;
+    --warn-bg:#fff8e1; --warn-bd:#f0c36d;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg:#14161a; --fg:#e6e8eb; --muted:#868d97; --card:#1e2228;
+      --bd:#2a2f36; --accent:#6ea2ff; --ok:#4ade80;
+      --warn-bg:#2a2410; --warn-bd:#6b5a1a;
+    }
+  }
+  *, *::before, *::after {
+    box-sizing: border-box;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:system-ui,sans-serif; }
+  main { max-width: 780px; margin: 40px auto; padding: 0 20px 60px; }
+  h1 { font-size: 1.4rem; margin: 0 0 6px; }
+  .lead { color: var(--muted); font-size: 13px; margin: 0 0 22px; }
+  h2 { font-size: 1rem; margin: 26px 0 10px; }
+  .card {
+    background:var(--card); border:1px solid var(--bd);
+    padding:0 16px; margin-bottom:14px;
+  }
+  .row { display:flex; align-items:center; gap:12px; padding:12px 0; }
+  .row + .row { border-top:1px solid var(--bd); }
+  .row label { flex:1; }
+  .row label strong { display:block; font-size:13px; }
+  .row small { color: var(--muted); display:block; font-size:12px; margin-top:3px; }
+  select, input[type=number], input[type=text] {
+    padding:7px 10px; border:1px solid var(--bd);
+    background:var(--bg); color:var(--fg); font-size:13px;
+    min-width: 160px;
+  }
+  input[type=text] { width: 100%; font-family: ui-monospace, monospace; font-size: 12px; }
+
+  .notice {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-bd);
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.55;
+    margin-bottom: 20px;
+  }
+  .notice b { color: var(--fg); }
+  .notice code {
+    background: rgba(0,0,0,0.06);
+    padding: 1px 5px;
+    font-size: 12px;
+  }
+  @media (prefers-color-scheme: dark) {
+    .notice code { background: rgba(255,255,255,0.08); }
+  }
+
+  .font-row { display:flex; flex-direction:column; gap:8px; padding:14px 0; }
+  .font-row + .font-row { border-top: 1px solid var(--bd); }
+  .font-label { display:flex; align-items:center; gap:8px; }
+  .font-label strong { font-size: 13px; }
+  .font-label .tag {
+    font-size: 11px; padding: 2px 7px;
+    background: var(--bg); border: 1px solid var(--bd); color: var(--muted);
+  }
+  .font-row input[type=text] { margin-top: 4px; }
+  .preview {
+    padding: 8px 12px;
+    border: 1px dashed var(--bd);
+    background: var(--bg);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .preview[dir="rtl"] { text-align: right; }
+  .help { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.55; }
+  .help a { color: var(--accent); text-decoration: none; }
+  .help a:hover { text-decoration: underline; }
+
+  .save {
+    background:var(--accent); color:#fff; border:0;
+    padding:9px 16px; font-weight:600; cursor:pointer;
+    position: sticky; bottom: 10px;
+  }
+  .save:hover { filter: brightness(1.08); }
+  .status { color: var(--ok); font-size: 12px; margin-inline-start: 8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Markdown RTL/LTR — Options</h1>
+  <p class="lead">These settings apply to the viewer on every page. They are stored in <code>chrome.storage.sync</code>.</p>
+
+  <div class="notice">
+    <b>Fonts come from your computer only.</b><br>
+    This extension never downloads fonts. It uses fonts that are already installed
+    on your operating system. If a font name below is not installed, the browser
+    silently falls back to the next name in the list. To use a specific font,
+    install it yourself first.
+  </div>
+
+  <h2>Appearance</h2>
+  <div class="card">
+    <div class="row">
+      <label>
+        <strong>Theme</strong>
+        <small>Viewer color scheme</small>
+      </label>
+      <select id="theme">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="sepia">Sepia</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>
+        <strong>Page width</strong>
+        <small>Narrow / Normal are fixed px caps. Wide fills 95% of the space left of the sidebar.</small>
+      </label>
+      <select id="width">
+        <option value="narrow">Narrow (620px)</option>
+        <option value="normal">Normal (860px)</option>
+        <option value="wide">Wide (95%)</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>
+        <strong>Base font size (px)</strong>
+        <small>Applied to the article body.</small>
+      </label>
+      <input type="number" id="size" min="12" max="24" />
+    </div>
+    <div class="row">
+      <label>
+        <strong>Show sidebar by default</strong>
+        <small>Collapsible with Ctrl+B in the viewer.</small>
+      </label>
+      <input type="checkbox" id="sidebar" />
+    </div>
+  </div>
+
+  <h2>RTL / LTR behavior</h2>
+  <div class="card">
+    <div class="row">
+      <label>
+        <strong>Direction</strong>
+        <small>Auto detects from the document content.</small>
+      </label>
+      <select id="dir">
+        <option value="auto">Auto</option>
+        <option value="rtl">RTL</option>
+        <option value="ltr">LTR</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>
+        <strong>Per-block bidi tagging</strong>
+        <small>Tag each paragraph with its own direction. Recommended for mixed documents.</small>
+      </label>
+      <input type="checkbox" id="tag" />
+    </div>
+  </div>
+
+  <h2>Fonts (installed on your computer)</h2>
+  <div class="card">
+    <div class="font-row">
+      <div class="font-label">
+        <strong>RTL font stack</strong>
+        <span class="tag">Hebrew / Arabic / Persian</span>
+      </div>
+      <input type="text" id="fontRTL" spellcheck="false" />
+      <div class="preview" id="previewRTL" dir="rtl" lang="fa">
+        سلام دنیا — نمونه متن فارسی. שלום עולם — דוגמת טקסט עברית. مرحبا بالعالم.
+      </div>
+      <div class="help">
+        Comma-separated CSS <code>font-family</code> list. The browser tries each
+        name in order and skips any that isn't installed.
+        Recommended first choice: <code>Vazirmatn</code> (Persian) or
+        <code>Droid Arabic Naskh</code> / <code>Noto Naskh Arabic</code> (Arabic).
+        <br>
+        If Vazirmatn is not installed, get it from
+        <a href="https://github.com/rastikerdar/vazirmatn/releases" target="_blank" rel="noopener">github.com/rastikerdar/vazirmatn/releases</a>.
+        For Arabic Naskh, install <b>Noto Naskh Arabic</b> via your OS package
+        manager or from <a href="https://fonts.google.com/noto/specimen/Noto+Naskh+Arabic" target="_blank" rel="noopener">Google Noto</a>.
+      </div>
+    </div>
+
+    <div class="font-row">
+      <div class="font-label">
+        <strong>LTR font stack</strong>
+        <span class="tag">Latin / Cyrillic / Greek</span>
+      </div>
+      <input type="text" id="fontLTR" spellcheck="false" />
+      <div class="preview" id="previewLTR" dir="ltr">
+        Hello world — sample text. Привет мир — пример. Γειά σου κόσμε.
+      </div>
+      <div class="help">
+        Same syntax: comma-separated CSS <code>font-family</code> list.
+        Default is your operating system UI font (<code>system-ui</code>).
+      </div>
+    </div>
+  </div>
+
+  <button class="save" id="save">Save</button>
+  <span class="status" id="status"></span>
+</main>
+<script src="options.js"></script>
+</body>
+</html>
