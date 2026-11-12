@@ -9,8 +9,11 @@
 </p>
 
 <p align="center">
+  <a href="https://github.com/mimdal-code/markdown-render-chrome-extension/releases/latest">
+    <img alt="Latest release" src="https://img.shields.io/github/v/release/mimdal-code/markdown-render-chrome-extension?style=flat-square">
+  </a>
   <a href="https://github.com/mimdal-code/markdown-render-chrome-extension/releases">
-    <img alt="Version" src="https://img.shields.io/badge/version-1.0.0-blue.svg?style=flat-square">
+    <img alt="Downloads" src="https://img.shields.io/github/downloads/mimdal-code/markdown-render-chrome-extension/total?style=flat-square">
   </a>
   <a href="https://github.com/mimdal-code/markdown-render-chrome-extension/blob/main/LICENSE">
     <img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-green.svg?style=flat-square">
@@ -23,15 +26,97 @@
 </p>
 
 <p align="center">
+  <a href="#-download--install"><strong>📥 Download & Install</strong></a> •
   <a href="#features">Features</a> •
-  <a href="#installation">Installation</a> •
   <a href="#usage">Usage</a> •
   <a href="#settings">Settings</a> •
   <a href="#fonts">Fonts</a> •
   <a href="#how-it-works">How it works</a> •
-  <a href="#development">Development</a> •
-  <a href="#license">License</a>
+  <a href="#development">Development</a>
 </p>
+
+---
+
+## 📥 Download & Install
+
+> **The Chrome Web Store version is not published yet** — the $5 developer registration is pending. Until then, install directly from GitHub Releases. It's a 2-minute manual install, works exactly the same, and is 100% free.
+
+### Step 1 — Download the latest release
+
+👉 **[Download the latest release](https://github.com/mimdal-code/markdown-render-chrome-extension/releases/latest)** 👈
+
+On that page, scroll to the **Assets** section and click:
+
+```
+md-rtl-reader-1.0.0.zip
+```
+
+(Or click any version you want from the [releases page](https://github.com/mimdal-code/markdown-render-chrome-extension/releases).)
+
+### Step 2 — Extract the zip
+
+Unzip the file to a permanent location — for example:
+
+| OS | Suggested path |
+|----|----------------|
+| Windows | `C:\Users\<you>\Extensions\md-rtl-reader\` |
+| macOS | `~/Extensions/md-rtl-reader/` |
+| Linux | `~/extensions/md-rtl-reader/` |
+
+> ⚠️ **Don't delete this folder after installing.** Chrome loads the extension from this directory on every launch. If you move or delete it, the extension stops working.
+
+The folder should contain `manifest.json` at its root, plus `src/`, `assets/`.
+
+### Step 3 — Load it into Chrome
+
+1. Open Chrome and go to:
+   ```
+   chrome://extensions
+   ```
+2. Toggle **Developer mode** on (top-right corner of the page).
+3. Click **Load unpacked**.
+4. Select the folder you extracted in Step 2 (the one containing `manifest.json`).
+
+The extension appears in the list, enabled.
+
+### Step 4 — Enable file URL access (for local Markdown)
+
+If you want to open local `.md` files (`file:///…/README.md`), you must grant one extra permission:
+
+1. On the extension card, click **Details**.
+2. Scroll to **"Allow access to file URLs"** and toggle it **on**.
+
+Without this step, the extension works on `http(s)` Markdown URLs but not on local files. It's a Chrome security requirement — no extension can bypass it.
+
+### Step 5 — Verify it works
+
+Open any `.md` file in Chrome:
+
+```
+file:///path/to/README.md
+https://raw.githubusercontent.com/.../README.md
+```
+
+The plain-text page should be replaced by the rendered viewer. If it isn't, see **Troubleshooting** below.
+
+### Updating to a newer release
+
+1. Download the newest `.zip` from [Releases](https://github.com/mimdal-code/markdown-render-chrome-extension/releases).
+2. Unzip it, **replacing** the contents of your existing folder.
+3. Go to `chrome://extensions` and click **Reload** (⟳) on the extension card.
+4. Close any open `.md` tabs and reopen them.
+
+### Troubleshooting manual install
+
+| Symptom | Cause | Fix |
+|---------|-------|-----|
+| "Manifest file is missing or unreadable" | Wrong folder selected | Select the folder that **directly contains** `manifest.json`, not its parent |
+| Nothing happens on `.md` files | File URLs not enabled, or stale tab | Enable "Allow access to file URLs"; close and reopen the tab |
+| "This extension may have been corrupted" | You moved/deleted the folder after installing | Move it back, or reload via `chrome://extensions` |
+| Extension disappears after Chrome restart | Same as above | Re-load unpacked from the same folder |
+| "Developer mode extensions" warning on every launch | Normal for side-loaded extensions | Ignore, or use the Web Store version once it's published |
+
+> **Why is this manual?** Publishing to the Chrome Web Store requires a **one-time $5 developer registration fee**. Once that's paid, this extension will be listed and installable with one click. For now, the manual install is functionally identical.
 
 ---
 
@@ -96,45 +181,6 @@ The extension is written in plain JavaScript, uses a small self-contained Markdo
 - **No analytics, no telemetry, no tracking**
 - **No external fonts or scripts**
 - All settings stored locally in `chrome.storage.sync`
-
----
-
-## Installation
-
-### From source (recommended for now)
-
-1. **Clone the repository**
-
-   ```bash
-   git clone https://github.com/mimdal-code/markdown-render-chrome-extension.git
-   cd markdown-render-chrome-extension
-   ```
-
-2. **Open Chrome extensions page**
-
-   ```
-   chrome://extensions
-   ```
-
-3. **Enable Developer mode** (toggle in the top-right corner).
-
-4. **Click "Load unpacked"** and select the project folder.
-
-5. **(Optional, for local files)** Click **Details** on the extension card, then enable **"Allow access to file URLs"**. This is required for the extension to run on `file:///…/README.md` and other local Markdown files.
-
-6. **Verify installation** — open any `.md` file in Chrome. It should be replaced by the rendered viewer.
-
-### From the Chrome Web Store
-
-> Not published yet. Star or watch this repository to be notified when it is.
-
-### Building a distributable `.zip`
-
-```bash
-./package.sh
-```
-
-Creates `markdown-render-chrome-extension-<version>.zip`, ready for the Chrome Web Store or side-loading on another machine.
 
 ---
 
@@ -286,7 +332,7 @@ After installing a font, restart Chrome so it picks up the new name.
 ```
 .
 ├── manifest.json               MV3 manifest
-├── package.sh                  Build .zip for the Web Store
+├── package.sh                  Build .zip for releases
 ├── README.md
 ├── LICENSE
 ├── assets/
@@ -316,6 +362,7 @@ After installing a font, restart Chrome so it picks up the new name.
         ├── english.md
         ├── hebrew.md
         ├── arabic.md
+        ├── persian.md
         ├── en-fa-mixed.md
         └── mixed.md
 ```
@@ -353,6 +400,17 @@ After installing a font, restart Chrome so it picks up the new name.
 
 Produces `markdown-render-chrome-extension-<version>.zip`.
 
+### Automated releases (GitHub Actions)
+
+Push a version tag and the CI workflow in `.github/workflows/release.yaml` packages the extension and attaches it to a new GitHub Release:
+
+```bash
+git tag -a v1.0.1 -m "Release v1.0.1"
+git push origin v1.0.1
+```
+
+The `.zip` appears on the [Releases page](https://github.com/mimdal-code/markdown-render-chrome-extension/releases) within a minute or two.
+
 ---
 
 ## Browser support
@@ -375,6 +433,7 @@ Produces `markdown-render-chrome-extension-<version>.zip`.
 - [ ] v1.2 — Export to HTML / PDF
 - [ ] v1.3 — Footnotes, task lists, definition lists
 - [ ] v1.4 — Custom theme editor
+- [ ] v1.5 — Publish to Chrome Web Store (pending $5 developer registration)
 - [ ] v2.0 — Firefox port (MV3 compatible)
 
 ---
@@ -408,6 +467,9 @@ cd markdown-render-chrome-extension
 **Does it work offline?**
 Yes — 100% offline. No network requests are made at any point.
 
+**Why isn't it on the Chrome Web Store?**
+Publishing requires a one-time $5 developer registration fee. Until that's paid, install directly from [GitHub Releases](#-download--install) — it's free and functionally identical.
+
 **Why does nothing happen when I open a `.md` file?**
 Either (a) the extension isn't installed/reloaded, (b) you're on a `file://` URL without "Allow access to file URLs" enabled, or (c) the tab was open before reloading the extension. Close the tab and open a fresh one.
 
@@ -428,7 +490,7 @@ Open an [issue](https://github.com/mimdal-code/markdown-render-chrome-extension/
 
 ## License
 
-[MIT](LICENSE) © 2026 Your Name
+[MIT](LICENSE) © 2026 Mimdal
 
 ---
 
@@ -441,14 +503,12 @@ Open an [issue](https://github.com/mimdal-code/markdown-render-chrome-extension/
 
 ---
 
-## `LICENSE`
+## `LICENSE` (updated copyright holder)
 
-Save this alongside the README:
-
-```
+```text
 MIT License
 
-Copyright (c) 2026 Your Name
+Copyright (c) 2026 Mimdal
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
