@@ -238,6 +238,72 @@ body {
   flex-shrink: 0;
   overflow: hidden;
 }
+
+/* Toolbar direction follows the UI language */
+.toolbar[dir="rtl"] { direction: rtl; }
+.toolbar[dir="rtl"] .spacer { /* flex:1 already pushes controls left in RTL */ }
+
+/* Search UI */
+.search-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+  border: 1px solid var(--bd);
+  background: var(--bg);
+}
+.search-input {
+  border: 0;
+  background: transparent;
+  color: var(--fg);
+  font-size: 12px;
+  padding: 4px 8px;
+  min-width: 180px;
+  outline: none;
+}
+.search-count {
+  font-size: 11px;
+  color: var(--muted);
+  padding: 0 4px;
+  min-width: 60px;
+  text-align: center;
+}
+.search-wrap .icon-btn {
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  border: 0;
+  background: transparent;
+}
+.search-wrap .icon-btn:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+mark.search-hit {
+  background: #fff3a8;
+  color: inherit;
+  padding: 0 1px;
+}
+mark.search-hit.active {
+  background: #ffb84d;
+  outline: 1px solid #d97706;
+}
+html[data-theme="dark"] mark.search-hit {
+  background: #4a3a00;
+  color: #fde68a;
+}
+html[data-theme="dark"] mark.search-hit.active {
+  background: #8a5a00;
+  color: #fff;
+}
+html[data-theme="sepia"] mark.search-hit {
+  background: #f0d9a8;
+  color: inherit;
+}
+html[data-theme="sepia"] mark.search-hit.active {
+  background: #c9963c;
+  color: #1a1206;
+}
 .icon-btn {
   display: inline-flex; align-items: center; justify-content: center;
   width: 28px; height: 28px;

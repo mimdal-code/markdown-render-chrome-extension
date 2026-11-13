@@ -8,60 +8,111 @@
     size: 16,
     sidebar: true,
     width: 'normal',
+    headerLangRTL: 'fa',
+    headerLangLTR: 'en',
     fontRTL: '"Vazirmatn", "Droid Arabic Naskh", "Noto Naskh Arabic", "Tahoma", sans-serif',
     fontLTR: 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif',
   };
 
-  const $ = (id) => document.getElementById(id);
-  const app          = document.querySelector('.app');
-  const mainScroll   = $('main-scroll');
-  const content      = $('content');
-  const docTitle     = $('doc-title');
-  const themeSel     = $('theme');
-  const dirSel       = $('dir');
-  const tagChk       = $('tag');
-  const sizeInput    = $('size');
-  const widthSel     = $('width');
-  const toc          = $('toc');
-  const toggleBtn    = $('toggle-sidebar');
-  const sbTabs       = document.querySelectorAll('.sb-tab');
-  const paneToc      = document.querySelector('.pane-toc');
-  const paneFiles    = document.querySelector('.pane-files');
+  const app         = document.querySelector('.app');
+  const toolbar     = document.querySelector('.toolbar');
+  const sidebar     = document.querySelector('.sidebar');
+  const mainScroll  = document.getElementById('main-scroll');
+  const content     = document.getElementById('content');
+  const docTitle    = document.getElementById('doc-title');
+  const themeSel    = document.getElementById('theme');
+  const dirSel      = document.getElementById('dir');
+  const tagChk      = document.getElementById('tag');
+  const sizeInput   = document.getElementById('size');
+  const widthSel    = document.getElementById('width');
+  const toc         = document.getElementById('toc');
+  const toggleBtn   = document.getElementById('toggle-sidebar');
+  const sbTabs      = document.querySelectorAll('.sb-tab');
+  const paneToc     = document.querySelector('.pane-toc');
+  const paneFiles   = document.querySelector('.pane-files');
+  const helpBtn     = document.getElementById('help-btn');
 
-  const searchWrap   = $('search-wrap');
-  const searchInput  = $('search-input');
-  const searchCount  = $('search-count');
-  const searchPrev   = $('search-prev');
-  const searchNext   = $('search-next');
-  const searchClear  = $('search-clear');
-
-  const helpBtn      = $('help-btn');
-  const helpBackdrop = $('help-backdrop');
-  const helpClose    = $('help-close');
+  const searchInput = document.getElementById('search-input');
+  const searchCount = document.getElementById('search-count');
+  const searchPrev  = document.getElementById('search-prev');
+  const searchNext  = document.getElementById('search-next');
+  const searchClear = document.getElementById('search-clear');
 
   let currentMarkdown = '';
-  let currentDocUrl   = '';
-  let currentDocKey   = '';
-
-  let matches = [];
-  let activeMatch = -1;
-
-  // Force help hidden on load
-  if (helpBackdrop) helpBackdrop.hidden = true;
+  let currentDocUrl = '';
+  let settings = { ...DEFAULTS };
 
   /* ---------- Settings ---------- */
   function loadSettings() {
     return new Promise((resolve) => {
       try {
         chrome.storage.sync.get(DEFAULTS, (s) => resolve({ ...DEFAULTS, ...s }));
-      } catch { resolve({ ...DEFAULTS }); }
+      } catch {
+        resolve({ ...DEFAULTS });
+      }
     });
   }
   function saveSettings(patch) {
+    Object.assign(settings, patch);
     try { chrome.storage.sync.set(patch); } catch {}
   }
-  function saveLocal(key, value) {
-    try { chrome.storage.local.set({ [key]: value }); } catch {}
+
+  /* ================================================================
+     Locale switching
+     The header follows the DOCUMENT direction. The document direction
+     is stored in <html dir="…"> after applyDir() runs. So every time
+     applyDir() completes, we re-translate the toolbar using the pack
+     matching the header's direction.
+     ================================================================ */
+  function currentHeaderDir() {
+    return toolbar.getAttribute('dir') === 'rtl' ? 'rtl' : 'ltr';
+  }
+
+  function langForDir(dir) {
+    return dir === 'rtl' ? settings.headerLangRTL : settings.headerLangLTR;
+  }
+
+  function applyHeaderLocale() {
+    const dir = currentHeaderDir();
+    const lang = langForDir(dir);
+    const t = (key) => window.I18N.t(key, lang);
+
+    // Toolbar direction attribute drives its own layout
+    toolbar.setAttribute('dir', dir);
+
+    // Toolbar labels via [data-i18n]
+    toolbar.querySelectorAll('[data-i18n]').forEach((el) => {
+      const key = el.getAttribute('data-i18n');
+      el.textContent = t(key);
+    });
+
+    // Tooltips / aria-labels
+    const setAttr = (el, name, key) => {
+      if (!el) return;
+      const v = t(key);
+      el.setAttribute(name, v);
+    };
+    setAttr(toggleBtn, 'title', 'toggle_sidebar');
+    setAttr(toggleBtn, 'aria-label', 'toggle_sidebar');
+    setAttr(searchInput, 'placeholder', 'search_placeholder');
+    setAttr(searchInput, 'aria-label', 'search_placeholder');
+    setAttr(searchPrev, 'title', 'search_prev');
+    setAttr(searchPrev, 'aria-label', 'search_prev');
+    setAttr(searchNext, 'title', 'search_next');
+    setAttr(searchNext, 'aria-label', 'search_next');
+    setAttr(searchClear, 'title', 'search_clear');
+    setAttr(searchClear, 'aria-label', 'search_clear');
+    setAttr(helpBtn, 'title', 'help');
+    setAttr(helpBtn, 'aria-label', 'help');
+
+    // Sidebar tabs also follow document direction, same as header
+    sidebar.querySelectorAll('[data-i18n]').forEach((el) => {
+      const key = el.getAttribute('data-i18n');
+      el.textContent = t(key);
+    });
+
+    // Refresh search count text if matches exist
+    if (searchMatches.length) updateSearchCount();
   }
 
   /* ---------- Apply settings ---------- */
@@ -76,19 +127,25 @@
     if (r && r.trim()) root.style.setProperty('--font-rtl', r);
     if (l && l.trim()) root.style.setProperty('--font-ltr', l);
   }
+
   function applyDir(d) {
     if (d === 'auto') {
       const primary = window.Dir.detectDocumentDir(currentMarkdown);
       document.documentElement.setAttribute('dir', primary);
       document.documentElement.setAttribute('lang', primary === 'rtl' ? 'fa' : 'en');
+      toolbar.setAttribute('dir', primary);
     } else {
       document.documentElement.setAttribute('dir', d);
       document.documentElement.setAttribute('lang', d === 'rtl' ? 'fa' : 'en');
+      toolbar.setAttribute('dir', d);
     }
+    // Header/sidebar labels are language-bound to the direction just applied
+    applyHeaderLocale();
   }
+
   function applySidebar(v) { app.classList.toggle('sidebar-collapsed', !v); }
 
-  /* ---------- Per-block bidi ---------- */
+  /* ---------- Per-block bidi tagging ---------- */
   function tagBlocks() {
     if (!tagChk.checked) {
       content.querySelectorAll('[data-dir]').forEach((el) => el.removeAttribute('data-dir'));
@@ -104,20 +161,69 @@
     });
   }
 
+  /* ---------- URL resolution ---------- */
+  function absoluteUrl(rel) {
+    if (!rel) return rel;
+    const s = String(rel).trim();
+    if (!s) return rel;
+    if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return s;
+    if (s.startsWith('//')) return s;
+    if (s.startsWith('#')) return s;
+    try { return new URL(s, currentDocUrl || location.href).href; }
+    catch { return s; }
+  }
+
+  function rewriteRelativeUrls(root) {
+    const attrs = [
+      ['img', 'src'], ['img', 'srcset'],
+      ['source', 'src'], ['source', 'srcset'],
+      ['video', 'src'], ['audio', 'src'],
+      ['iframe', 'src'], ['object', 'data'], ['embed', 'src'],
+      ['link', 'href'], ['script', 'src'], ['a', 'href'],
+    ];
+    for (const [tag, attr] of attrs) {
+      root.querySelectorAll(`${tag}[${attr}]`).forEach((el) => {
+        const v = el.getAttribute(attr);
+        if (v == null) return;
+        if (attr === 'srcset') {
+          el.setAttribute(attr, v.split(',').map((part) => {
+            const bits = part.trim().split(/\s+/);
+            bits[0] = absoluteUrl(bits[0]);
+            return bits.join(' ');
+          }).join(', '));
+        } else {
+          el.setAttribute(attr, absoluteUrl(v));
+        }
+      });
+    }
+  }
+
   /* ---------- TOC ---------- */
+  function slugify(text, used) {
+    const base = text.toLowerCase().trim()
+      .replace(/[^\p{L}\p{N}\s-]/gu, '')
+      .replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'section';
+    let slug = base, n = 2;
+    while (used.has(slug)) slug = `${base}-${n++}`;
+    used.add(slug);
+    return slug;
+  }
+
   function buildToc() {
     toc.innerHTML = '';
     const headings = content.querySelectorAll('h1, h2, h3, h4, h5, h6');
     if (!headings.length) {
       const e = document.createElement('div');
       e.className = 'toc-empty';
-      e.textContent = 'No headings in this document.';
+      e.textContent = window.I18N.t('no_headings', langForDir(currentHeaderDir()));
       toc.appendChild(e);
       return;
     }
+    const used = new Set();
     headings.forEach((h) => {
       const level = +h.tagName.slice(1);
-      const text = h.querySelector('.heading-text')?.textContent || h.textContent || '';
+      const text = h.textContent || '';
+      if (!h.id) h.id = slugify(text, used);
       const a = document.createElement('a');
       a.className = `toc-item lvl-${level}`;
       a.href = `#${h.id}`;
@@ -125,7 +231,8 @@
       a.dataset.target = h.id;
       a.addEventListener('click', (e) => {
         e.preventDefault();
-        scrollToHeading(h.id);
+        const offset = h.getBoundingClientRect().top - mainScroll.getBoundingClientRect().top;
+        mainScroll.scrollBy({ top: offset - 8, behavior: 'smooth' });
         setActiveToc(h.id);
       });
       toc.appendChild(a);
@@ -166,25 +273,11 @@
     if (active) active.scrollIntoView({ block: 'nearest' });
   }
 
-  function scrollToHeading(id) {
-    const h = content.querySelector('#' + CSS.escape(id));
-    if (!h) return;
-    const offset = h.getBoundingClientRect().top - mainScroll.getBoundingClientRect().top;
-    mainScroll.scrollBy({ top: offset - 8, behavior: 'smooth' });
-  }
-
-  function headingList() {
-    return Array.from(content.querySelectorAll('h1, h2, h3, h4, h5, h6'));
-  }
-
   /* ---------- Render ---------- */
   function render(md) {
     currentMarkdown = md || '';
-    clearHighlightsOnly();
     content.innerHTML = window.MD.render(currentMarkdown);
-
     rewriteRelativeUrls(content);
-
     content.querySelectorAll('a[href]').forEach((a) => {
       const href = a.getAttribute('href') || '';
       if (/^https?:\/\//i.test(href)) {
@@ -192,124 +285,172 @@
         a.rel = 'noopener noreferrer';
       }
     });
-
-    restoreTaskStates();
     tagBlocks();
     buildToc();
-
-    if (searchInput.value) {
-      runSearch();
-    } else {
-      updateSearchUI();
-    }
+    // Translate copy buttons using the header language for the current direction
+    const lang = langForDir(currentHeaderDir());
+    content.querySelectorAll('.code-copy').forEach((btn) => {
+      if (!btn.textContent || btn.textContent === 'Copy') {
+        btn.textContent = window.I18N.t('copy', lang);
+      }
+    });
   }
 
-  /* ---------- URL rewriting ---------- */
-  function absoluteUrl(rel) {
-    if (!rel) return rel;
-    const s = String(rel).trim();
-    if (!s) return rel;
-    if (/^[a-z][a-z0-9+.-]*:/i.test(s)) return s;
-    if (s.startsWith('//')) return s;
-    if (s.startsWith('#')) return s;
-    try { return new URL(s, currentDocUrl || location.href).href; }
-    catch { return s; }
+  /* ---------- Search ---------- */
+  let searchMatches = [];
+  let searchIndex = -1;
+  let searchDebounce = null;
+
+  function clearSearchHighlight() {
+    content.querySelectorAll('mark.search-hit').forEach((m) => {
+      const parent = m.parentNode;
+      if (!parent) return;
+      while (m.firstChild) parent.insertBefore(m.firstChild, m);
+      parent.removeChild(m);
+      parent.normalize();
+    });
+    searchMatches = [];
+    searchIndex = -1;
+    searchCount.textContent = '';
   }
 
-  function rewriteRelativeUrls(root) {
-    const attrs = [
-      ['img', 'src'], ['img', 'srcset'], ['source', 'src'], ['source', 'srcset'],
-      ['video', 'src'], ['audio', 'src'], ['iframe', 'src'], ['object', 'data'],
-      ['embed', 'src'], ['link', 'href'], ['script', 'src'], ['a', 'href'],
-    ];
-    for (const [tag, attr] of attrs) {
-      root.querySelectorAll(`${tag}[${attr}]`).forEach((el) => {
-        const v = el.getAttribute(attr);
-        if (v == null) return;
-        if (attr === 'srcset') {
-          el.setAttribute(attr, v.split(',').map((p) => {
-            const bits = p.trim().split(/\s+/);
-            bits[0] = absoluteUrl(bits[0]);
-            return bits.join(' ');
-          }).join(', '));
-        } else {
-          el.setAttribute(attr, absoluteUrl(v));
-        }
+  function runSearch(query) {
+    clearSearchHighlight();
+    const q = (query || '').trim();
+    if (!q) return;
+
+    const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT, {
+      acceptNode(node) {
+        const parent = node.parentNode;
+        if (!parent) return NodeFilter.FILTER_REJECT;
+        if (parent.nodeName === 'SCRIPT' || parent.nodeName === 'STYLE') return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    });
+
+    const textNodes = [];
+    let n;
+    while ((n = walker.nextNode())) textNodes.push(n);
+
+    const lowerQ = q.toLowerCase();
+    textNodes.forEach((node) => {
+      const text = node.nodeValue || '';
+      const lower = text.toLowerCase();
+      let idx = 0;
+      const ranges = [];
+      while ((idx = lower.indexOf(lowerQ, idx)) !== -1) {
+        ranges.push([idx, idx + q.length]);
+        idx += q.length;
+      }
+      if (!ranges.length) return;
+
+      const frag = document.createDocumentFragment();
+      let last = 0;
+      ranges.forEach(([s, e]) => {
+        if (s > last) frag.appendChild(document.createTextNode(text.slice(last, s)));
+        const mark = document.createElement('mark');
+        mark.className = 'search-hit';
+        mark.textContent = text.slice(s, e);
+        frag.appendChild(mark);
+        last = e;
       });
-    }
-  }
+      if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+      node.parentNode.replaceChild(frag, node);
+    });
 
-  /* ---------- Task persistence ---------- */
-  function taskKey(el) {
-    const all = Array.from(content.querySelectorAll('input.task-checkbox[data-task]'));
-    const idx = all.indexOf(el);
-    return `${currentDocKey}::task::${idx}`;
-  }
-
-  function restoreTaskStates() {
-    if (!currentDocKey) return;
-    const tasks = content.querySelectorAll('input.task-checkbox[data-task]');
-    if (!tasks.length) return;
-    try {
-      chrome.storage.local.get(null, (all) => {
-        tasks.forEach((cb) => {
-          const key = taskKey(cb);
-          if (Object.prototype.hasOwnProperty.call(all, key)) {
-            cb.checked = !!all[key];
-          }
-        });
-      });
-    } catch {}
-  }
-
-  /* ---------- Copy code & heading anchor ---------- */
-  content.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.code-copy');
-    if (btn) {
-      const wrap = btn.closest('.code-block');
-      const codeEl = wrap && wrap.querySelector('pre code');
-      if (!codeEl) return;
-      await copyText(codeEl.textContent || '', btn);
+    searchMatches = Array.from(content.querySelectorAll('mark.search-hit'));
+    if (!searchMatches.length) {
+      const lang = langForDir(currentHeaderDir());
+      searchCount.textContent = window.I18N.t('search_no_results', lang);
+      searchIndex = -1;
       return;
     }
+    searchIndex = 0;
+    updateSearchCount();
+    focusMatch(0);
+  }
 
-    const anchor = e.target.closest('.heading-anchor');
-    if (anchor) {
-      const id = anchor.getAttribute('data-anchor');
-      const base = currentDocUrl || location.href;
-      const url = base.split('#')[0] + '#' + id;
-      try {
-        await navigator.clipboard.writeText(url);
-        const old = anchor.textContent;
-        anchor.textContent = '✓';
-        anchor.classList.add('copied');
-        setTimeout(() => {
-          anchor.textContent = old;
-          anchor.classList.remove('copied');
-        }, 1000);
-      } catch {
-        const ta = document.createElement('textarea');
-        ta.value = url;
-        ta.style.position = 'fixed';
-        ta.style.top = '-1000px';
-        document.body.appendChild(ta);
-        ta.select();
-        try { document.execCommand('copy'); } catch {}
-        document.body.removeChild(ta);
-      }
+  function updateSearchCount() {
+    if (!searchMatches.length) {
+      searchCount.textContent = '';
+      return;
+    }
+    const lang = langForDir(currentHeaderDir());
+    const total = searchMatches.length;
+    const n = searchIndex + 1;
+    searchCount.textContent = window.I18N.tReplace('search_results', { n, total }, lang);
+  }
+
+  function focusMatch(i) {
+    if (!searchMatches.length) return;
+    if (i < 0) i = searchMatches.length - 1;
+    if (i >= searchMatches.length) i = 0;
+    searchIndex = i;
+    searchMatches.forEach((m, idx) => m.classList.toggle('active', idx === i));
+    const el = searchMatches[i];
+    const offset = el.getBoundingClientRect().top - mainScroll.getBoundingClientRect().top;
+    mainScroll.scrollBy({ top: offset - 80, behavior: 'smooth' });
+    updateSearchCount();
+  }
+
+  function nextMatch() {
+    if (!searchMatches.length) return;
+    focusMatch(searchIndex + 1);
+  }
+  function prevMatch() {
+    if (!searchMatches.length) return;
+    focusMatch(searchIndex - 1);
+  }
+
+  searchInput.addEventListener('input', () => {
+    if (searchDebounce) clearTimeout(searchDebounce);
+    searchDebounce = setTimeout(() => runSearch(searchInput.value), 180);
+  });
+
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (e.shiftKey) prevMatch();
+      else nextMatch();
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      clearSearchHighlight();
+      searchInput.value = '';
+      searchInput.blur();
     }
   });
 
-  async function copyText(text, btn) {
+  searchPrev.addEventListener('click', prevMatch);
+  searchNext.addEventListener('click', nextMatch);
+  searchClear.addEventListener('click', () => {
+    searchInput.value = '';
+    clearSearchHighlight();
+    searchInput.focus();
+  });
+
+  /* ---------- Copy button (delegated) ---------- */
+  content.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.code-copy');
+    if (!btn) return;
+
+    const wrap = btn.closest('.code-block');
+    const codeEl = wrap && wrap.querySelector('pre code');
+    if (!codeEl) return;
+
+    const lang = langForDir(currentHeaderDir());
+    const text = codeEl.textContent || '';
     const reset = () => {
-      btn.textContent = 'Copy';
+      btn.textContent = window.I18N.t('copy', lang);
       btn.classList.remove('copied');
     };
+
     try {
       if (navigator.clipboard && navigator.clipboard.writeText) {
         await navigator.clipboard.writeText(text);
-      } else { throw new Error('no clipboard'); }
-      btn.textContent = 'Copied';
+      } else {
+        throw new Error('no clipboard');
+      }
+      btn.textContent = window.I18N.t('copied', lang);
       btn.classList.add('copied');
       setTimeout(reset, 1200);
     } catch {
@@ -318,311 +459,96 @@
       ta.setAttribute('readonly', '');
       ta.style.position = 'fixed';
       ta.style.top = '-1000px';
+      ta.style.opacity = '0';
       document.body.appendChild(ta);
       ta.select();
       let ok = false;
       try { ok = document.execCommand('copy'); } catch {}
       document.body.removeChild(ta);
-      btn.textContent = ok ? 'Copied' : 'Failed';
-      btn.classList.add('copied');
-      setTimeout(reset, 1200);
-    }
-  }
-
-  /* ---------- Task checkbox handler ---------- */
-  content.addEventListener('change', (e) => {
-    const cb = e.target.closest('input.task-checkbox[data-task]');
-    if (!cb) return;
-    const key = taskKey(cb);
-    saveLocal(key, cb.checked);
-  });
-
-  /* ============================================================
-     SEARCH
-     ============================================================ */
-
-  function clearHighlightsOnly() {
-    content.querySelectorAll('mark.search-hit').forEach((m) => {
-      const parent = m.parentNode;
-      if (!parent) return;
-      while (m.firstChild) parent.insertBefore(m.firstChild, m);
-      parent.removeChild(m);
-      parent.normalize();
-    });
-    matches = [];
-    activeMatch = -1;
-  }
-
-  function clearSearch() {
-    clearHighlightsOnly();
-    searchInput.value = '';
-    searchCount.textContent = '';
-    searchWrap.classList.remove('has-query', 'has-match', 'has-active');
-  }
-
-  function updateSearchUI() {
-    const total = matches.length;
-    if (!searchInput.value) {
-      searchCount.textContent = '';
-      searchWrap.classList.remove('has-query', 'has-match', 'has-active');
-      return;
-    }
-    searchWrap.classList.add('has-query');
-    if (total === 0) {
-      searchCount.textContent = '0';
-      searchWrap.classList.remove('has-match', 'has-active');
-    } else {
-      searchCount.textContent = `${activeMatch + 1} / ${total}`;
-      searchWrap.classList.add('has-match');
-      searchWrap.classList.toggle('has-active', activeMatch >= 0);
-    }
-  }
-
-  function runSearch() {
-    clearHighlightsOnly();
-    const q = searchInput.value;
-    if (!q) { updateSearchUI(); return; }
-
-    const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT, {
-      acceptNode(node) {
-        if (!node.nodeValue) return NodeFilter.FILTER_REJECT;
-        const p = node.parentElement;
-        if (!p) return NodeFilter.FILTER_REJECT;
-        if (p.closest('.code-copy, .heading-anchor, .task-checkbox, .task-label input')) {
-          return NodeFilter.FILTER_REJECT;
-        }
-        return NodeFilter.FILTER_ACCEPT;
-      },
-    });
-
-    const nodes = [];
-    let node;
-    while ((node = walker.nextNode())) nodes.push(node);
-
-    const lower = q.toLowerCase();
-    const ranges = [];
-    nodes.forEach((textNode) => {
-      const hay = textNode.nodeValue.toLowerCase();
-      let from = 0;
-      while (true) {
-        const idx = hay.indexOf(lower, from);
-        if (idx === -1) break;
-        const r = document.createRange();
-        r.setStart(textNode, idx);
-        r.setEnd(textNode, idx + q.length);
-        ranges.push(r);
-        from = idx + q.length;
-      }
-    });
-
-    ranges.forEach((range, i) => {
-      try {
-        const mark = document.createElement('mark');
-        mark.className = 'search-hit';
-        mark.dataset.index = String(i);
-        range.surroundContents(mark);
-        matches.push({ range: null, mark, parent: mark.parentNode });
-      } catch {}
-    });
-
-    matches.sort((a, b) => {
-      const pos = a.mark.compareDocumentPosition(b.mark);
-      return pos & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1;
-    });
-    matches.forEach((m, i) => (m.mark.dataset.index = String(i)));
-
-    if (matches.length) {
-      activeMatch = 0;
-      scrollToMatch(0);
-    }
-    updateSearchUI();
-  }
-
-  function scrollToMatch(i) {
-    if (i < 0 || i >= matches.length) return;
-    const mark = matches[i].mark;
-    mark.classList.add('search-active');
-    const offset = mark.getBoundingClientRect().top - mainScroll.getBoundingClientRect().top;
-    mainScroll.scrollBy({ top: offset - mainScroll.clientHeight * 0.35, behavior: 'smooth' });
-  }
-
-  function activateMatch(i) {
-    if (!matches.length) return;
-    if (activeMatch >= 0 && matches[activeMatch]) {
-      matches[activeMatch].mark.classList.remove('search-active');
-    }
-    activeMatch = (i + matches.length) % matches.length;
-    scrollToMatch(activeMatch);
-    updateSearchUI();
-  }
-
-  function nextMatch() { if (matches.length) activateMatch(activeMatch + 1); }
-  function prevMatch() { if (matches.length) activateMatch(activeMatch - 1); }
-
-  searchInput.addEventListener('input', runSearch);
-
-  searchInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      if (e.shiftKey) prevMatch(); else nextMatch();
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      clearSearch();
-      searchInput.blur();
-    }
-  });
-
-  searchNext.addEventListener('click', nextMatch);
-  searchPrev.addEventListener('click', prevMatch);
-  searchClear.addEventListener('click', () => {
-    clearSearch();
-    searchInput.focus();
-  });
-
-  /* ============================================================
-     HELP MODAL
-     ============================================================ */
-
-  function openHelp() {
-    helpBackdrop.hidden = false;
-    helpClose.focus();
-    try {
-      const v = chrome.runtime.getManifest().version;
-      const el = $('help-version');
-      if (el) el.textContent = v;
-    } catch {}
-  }
-  function closeHelp() {
-    helpBackdrop.hidden = true;
-  }
-  helpBtn.addEventListener('click', openHelp);
-  helpClose.addEventListener('click', closeHelp);
-  helpBackdrop.addEventListener('click', (e) => {
-    if (e.target === helpBackdrop) closeHelp();
-  });
-
-  /* ============================================================
-     GLOBAL KEYBOARD
-     ============================================================ */
-
-  let lastKey = '';
-  let lastKeyTime = 0;
-
-  document.addEventListener('keydown', (e) => {
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
-      e.preventDefault();
-      searchInput.focus();
-      searchInput.select();
-      return;
-    }
-
-    if (e.key === 'Escape') {
-      if (!helpBackdrop.hidden) {
-        e.preventDefault();
-        closeHelp();
-        return;
-      }
-      if (document.activeElement === searchInput) {
-        e.preventDefault();
-        clearSearch();
-        searchInput.blur();
-        return;
-      }
-      return;
-    }
-
-    const tag = (e.target && e.target.tagName) || '';
-    const isFormField =
-      tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' ||
-      (e.target && e.target.isContentEditable);
-    if (isFormField) return;
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-
-    const key = e.key;
-
-    if (key === '?') {
-      e.preventDefault();
-      openHelp();
-      return;
-    }
-
-    if (key === 'j' || key === 'k') {
-      e.preventDefault();
-      const headings = headingList();
-      if (!headings.length) return;
-      const y = mainScroll.getBoundingClientRect().top + 8;
-      if (key === 'j') {
-        const next = headings.find((h) => h.getBoundingClientRect().top > y + 8);
-        if (next) scrollToHeading(next.id);
+      if (ok) {
+        btn.textContent = window.I18N.t('copied', lang);
+        btn.classList.add('copied');
+        setTimeout(reset, 1200);
       } else {
-        const prev = [...headings].reverse().find((h) => h.getBoundingClientRect().top < y - 8);
-        if (prev) scrollToHeading(prev.id);
+        btn.textContent = window.I18N.t('copy_failed', lang);
+        setTimeout(reset, 1200);
       }
-      return;
-    }
-
-    if (key === 'G') {
-      e.preventDefault();
-      mainScroll.scrollTo({ top: mainScroll.scrollHeight, behavior: 'smooth' });
-      return;
-    }
-    if (key === 'g') {
-      const now = Date.now();
-      if (lastKey === 'g' && now - lastKeyTime < 500) {
-        e.preventDefault();
-        mainScroll.scrollTo({ top: 0, behavior: 'smooth' });
-        lastKey = '';
-      } else {
-        lastKey = 'g';
-        lastKeyTime = now;
-      }
-      return;
-    }
-
-    if (key === '[') {
-      e.preventDefault();
-      toggleBtn.click();
-      return;
-    }
-
-    if (key === 'n') {
-      if (matches.length) { e.preventDefault(); nextMatch(); }
-      return;
-    }
-    if (key === 'N') {
-      if (matches.length) { e.preventDefault(); prevMatch(); }
-      return;
     }
   });
 
-  /* ============================================================
-     MESSAGE / INIT
-     ============================================================ */
+  /* ---------- Help modal ---------- */
+  function showHelp() {
+    const existing = document.getElementById('help-modal');
+    if (existing) { existing.remove(); return; }
 
+    const dir = currentHeaderDir();
+    const lang = langForDir(dir);
+    const t = (key) => window.I18N.t(key, lang);
+
+    const overlay = document.createElement('div');
+    overlay.id = 'help-modal';
+    overlay.style.cssText =
+      'position:fixed;inset:0;z-index:2147483646;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px;';
+
+    const box = document.createElement('div');
+    box.style.cssText =
+      'max-width:520px;width:100%;background:var(--bg);color:var(--fg);border:1px solid var(--bd);padding:22px 24px;font-size:14px;line-height:1.6;';
+    box.setAttribute('dir', dir);
+
+    const title = document.createElement('h3');
+    title.style.cssText = 'margin:0 0 14px;font-size:1.05rem;';
+    title.textContent = t('help_title');
+
+    const body = document.createElement('pre');
+    body.style.cssText =
+      'margin:0;font-family:var(--font-mono);font-size:13px;white-space:pre-wrap;color:var(--fg-soft);background:var(--card);padding:12px 14px;border:1px solid var(--bd);';
+    body.textContent = t('help_body');
+
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕';
+    closeBtn.style.cssText =
+      'margin-top:16px;padding:8px 16px;background:var(--accent);color:#fff;border:0;font-weight:600;cursor:pointer;float:inline-end;';
+    closeBtn.onclick = () => overlay.remove();
+
+    box.appendChild(title);
+    box.appendChild(body);
+    box.appendChild(closeBtn);
+    overlay.appendChild(box);
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.remove();
+    });
+    document.body.appendChild(overlay);
+  }
+  helpBtn.addEventListener('click', showHelp);
+
+  /* ---------- Message handler ---------- */
   window.addEventListener('message', async (e) => {
     if (!e.data || e.data.type !== 'MD_RTL_RENDER') return;
-
     currentDocUrl = e.data.url || '';
-    currentDocKey = currentDocUrl || ('doc:' + (e.data.title || 'untitled'));
-
     docTitle.textContent = e.data.title || 'Markdown';
     docTitle.title = e.data.title || '';
 
+    settings = await loadSettings();
+
+    await window.I18N.load();
+
     render(e.data.markdown);
 
-    const s = await loadSettings();
-    themeSel.value = s.theme;
-    dirSel.value = s.dir;
-    tagChk.checked = !!s.tag;
-    sizeInput.value = s.size;
-    widthSel.value = s.width;
+    themeSel.value = settings.theme;
+    dirSel.value = settings.dir;
+    tagChk.checked = !!settings.tag;
+    sizeInput.value = settings.size;
+    widthSel.value = settings.width;
 
-    applyTheme(s.theme);
-    applyWidth(s.width);
-    applyDir(s.dir);
-    applySize(s.size);
-    applySidebar(s.sidebar);
-    applyFonts(s.fontRTL, s.fontLTR);
+    applyTheme(settings.theme);
+    applyWidth(settings.width);
+    applySize(settings.size);
+    applySidebar(settings.sidebar);
+    applyFonts(settings.fontRTL, settings.fontLTR);
+
+    // Direction is applied LAST — it triggers applyHeaderLocale(),
+    // so the header language matches the direction just set.
+    applyDir(settings.dir);
     tagBlocks();
   });
 
@@ -657,9 +583,17 @@
     saveSettings({ width: widthSel.value });
   });
   dirSel.addEventListener('change', () => {
+    // applyDir re-runs applyHeaderLocale(), so the header switches
+    // to the language matching the newly-chosen direction.
     applyDir(dirSel.value);
     saveSettings({ dir: dirSel.value });
     tagBlocks();
+    // Re-translate copy buttons and search counter for the new language
+    const lang = langForDir(currentHeaderDir());
+    content.querySelectorAll('.code-copy').forEach((btn) => {
+      if (!btn.classList.contains('copied')) btn.textContent = window.I18N.t('copy', lang);
+    });
+    if (searchMatches.length) updateSearchCount();
   });
   tagChk.addEventListener('change', () => {
     saveSettings({ tag: tagChk.checked });
@@ -670,21 +604,48 @@
     saveSettings({ size: +sizeInput.value });
   });
 
+  /* ---------- Keyboard shortcuts ---------- */
+  document.addEventListener('keydown', (e) => {
+    const tag = (e.target && e.target.tagName) || '';
+    const typing = tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable;
+
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+      e.preventDefault();
+      toggleBtn.click();
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'f') {
+      e.preventDefault();
+      searchInput.focus();
+      searchInput.select();
+      return;
+    }
+    if (typing) return;
+    if (e.key === '?') {
+      e.preventDefault();
+      showHelp();
+    }
+  });
+
   /* ---------- Init ---------- */
   (async () => {
-    const s = await loadSettings();
-    themeSel.value = s.theme;
-    dirSel.value = s.dir;
-    tagChk.checked = !!s.tag;
-    sizeInput.value = s.size;
-    widthSel.value = s.width;
-    applyTheme(s.theme);
-    applyWidth(s.width);
-    applyDir(s.dir);
-    applySize(s.size);
-    applySidebar(s.sidebar);
-    applyFonts(s.fontRTL, s.fontLTR);
+    settings = await loadSettings();
+    await window.I18N.load();
 
-    if (helpBackdrop) helpBackdrop.hidden = true;
+    themeSel.value = settings.theme;
+    dirSel.value = settings.dir;
+    tagChk.checked = !!settings.tag;
+    sizeInput.value = settings.size;
+    widthSel.value = settings.width;
+
+    applyTheme(settings.theme);
+    applyWidth(settings.width);
+    applySize(settings.size);
+    applySidebar(settings.sidebar);
+    applyFonts(settings.fontRTL, settings.fontLTR);
+
+    // Empty document → auto-detection returns 'ltr', so the header
+    // starts in the LTR language until a real document arrives.
+    applyDir(settings.dir);
   })();
 })();

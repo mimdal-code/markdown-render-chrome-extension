@@ -26,10 +26,7 @@
   h1 { font-size: 1.4rem; margin: 0 0 6px; }
   .lead { color: var(--muted); font-size: 13px; margin: 0 0 22px; }
   h2 { font-size: 1rem; margin: 26px 0 10px; }
-  .card {
-    background:var(--card); border:1px solid var(--bd);
-    padding:0 16px; margin-bottom:14px;
-  }
+  .card { background:var(--card); border:1px solid var(--bd); padding:0 16px; margin-bottom:14px; }
   .row { display:flex; align-items:center; gap:12px; padding:12px 0; }
   .row + .row { border-top:1px solid var(--bd); }
   .row label { flex:1; }
@@ -38,28 +35,19 @@
   select, input[type=number], input[type=text] {
     padding:7px 10px; border:1px solid var(--bd);
     background:var(--bg); color:var(--fg); font-size:13px;
-    min-width: 160px;
+    min-width: 180px;
   }
   input[type=text] { width: 100%; font-family: ui-monospace, monospace; font-size: 12px; }
-
   .notice {
-    background: var(--warn-bg);
-    border: 1px solid var(--warn-bd);
-    padding: 12px 14px;
-    font-size: 13px;
-    line-height: 1.55;
+    background: var(--warn-bg); border: 1px solid var(--warn-bd);
+    padding: 12px 14px; font-size: 13px; line-height: 1.55;
     margin-bottom: 20px;
   }
   .notice b { color: var(--fg); }
-  .notice code {
-    background: rgba(0,0,0,0.06);
-    padding: 1px 5px;
-    font-size: 12px;
-  }
+  .notice code { background: rgba(0,0,0,0.06); padding: 1px 5px; font-size: 12px; }
   @media (prefers-color-scheme: dark) {
     .notice code { background: rgba(255,255,255,0.08); }
   }
-
   .font-row { display:flex; flex-direction:column; gap:8px; padding:14px 0; }
   .font-row + .font-row { border-top: 1px solid var(--bd); }
   .font-label { display:flex; align-items:center; gap:8px; }
@@ -70,17 +58,13 @@
   }
   .font-row input[type=text] { margin-top: 4px; }
   .preview {
-    padding: 8px 12px;
-    border: 1px dashed var(--bd);
-    background: var(--bg);
-    font-size: 15px;
-    line-height: 1.6;
+    padding: 8px 12px; border: 1px dashed var(--bd);
+    background: var(--bg); font-size: 15px; line-height: 1.6;
   }
   .preview[dir="rtl"] { text-align: right; }
   .help { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.55; }
   .help a { color: var(--accent); text-decoration: none; }
   .help a:hover { text-decoration: underline; }
-
   .save {
     background:var(--accent); color:#fff; border:0;
     padding:9px 16px; font-weight:600; cursor:pointer;
@@ -92,122 +76,116 @@
 </head>
 <body>
 <main>
-  <h1>Markdown RTL/LTR — Options</h1>
-  <p class="lead">These settings apply to the viewer on every page. They are stored in <code>chrome.storage.sync</code>.</p>
+  <h1 data-i18n="options_title">Markdown RTL/LTR — Options</h1>
+  <p class="lead" data-i18n="options_lead">These settings apply to the viewer on every page.</p>
 
-  <div class="notice">
-    <b>Fonts come from your computer only.</b><br>
-    This extension never downloads fonts. It uses fonts that are already installed
-    on your operating system. If a font name below is not installed, the browser
-    silently falls back to the next name in the list. To use a specific font,
-    install it yourself first.
-  </div>
-
-  <h2>Appearance</h2>
+  <h2 data-i18n="appearance">Appearance</h2>
   <div class="card">
     <div class="row">
       <label>
-        <strong>Theme</strong>
-        <small>Viewer color scheme</small>
+        <strong data-i18n="header_lang_rtl">Header language (RTL documents)</strong>
+        <small data-i18n="header_lang_rtl_help">Toolbar labels shown when the document is RTL.</small>
+      </label>
+      <select id="headerLangRTL"></select>
+    </div>
+    <div class="row">
+      <label>
+        <strong data-i18n="header_lang_ltr">Header language (LTR documents)</strong>
+        <small data-i18n="header_lang_ltr_help">Toolbar labels shown when the document is LTR.</small>
+      </label>
+      <select id="headerLangLTR"></select>
+    </div>
+    <div class="row">
+      <label>
+        <strong data-i18n="theme">Theme</strong>
+        <small data-i18n="theme_light">Viewer color scheme</small>
       </label>
       <select id="theme">
-        <option value="light">Light</option>
-        <option value="dark">Dark</option>
-        <option value="sepia">Sepia</option>
+        <option value="light" data-i18n="theme_light">Light</option>
+        <option value="dark" data-i18n="theme_dark">Dark</option>
+        <option value="sepia" data-i18n="theme_sepia">Sepia</option>
       </select>
     </div>
     <div class="row">
       <label>
-        <strong>Page width</strong>
-        <small>Narrow / Normal are fixed px caps. Wide fills 95% of the space left of the sidebar.</small>
+        <strong data-i18n="page_width">Page width</strong>
+        <small data-i18n="page_width_help">Narrow / Normal are fixed px caps. Wide fills 95% of the space left of the sidebar.</small>
       </label>
       <select id="width">
-        <option value="narrow">Narrow (620px)</option>
-        <option value="normal">Normal (860px)</option>
-        <option value="wide">Wide (95%)</option>
+        <option value="narrow" data-i18n="width_narrow">Narrow (620px)</option>
+        <option value="normal" data-i18n="width_normal">Normal (860px)</option>
+        <option value="wide" data-i18n="width_wide">Wide (95%)</option>
       </select>
     </div>
     <div class="row">
       <label>
-        <strong>Base font size (px)</strong>
-        <small>Applied to the article body.</small>
+        <strong data-i18n="base_font_size">Base font size (px)</strong>
       </label>
       <input type="number" id="size" min="12" max="24" />
     </div>
     <div class="row">
       <label>
-        <strong>Show sidebar by default</strong>
-        <small>Collapsible with Ctrl+B in the viewer.</small>
+        <strong data-i18n="show_sidebar">Show sidebar by default</strong>
+        <small data-i18n="show_sidebar_help">Collapsible with Ctrl+B in the viewer.</small>
       </label>
       <input type="checkbox" id="sidebar" />
     </div>
   </div>
 
-  <h2>RTL / LTR behavior</h2>
+  <h2 data-i18n="rtl_ltr_behavior">RTL / LTR behavior</h2>
   <div class="card">
     <div class="row">
       <label>
-        <strong>Direction</strong>
-        <small>Auto detects from the document content.</small>
+        <strong data-i18n="direction">Direction</strong>
+        <small data-i18n="direction_help">Auto detects from the document content.</small>
       </label>
       <select id="dir">
-        <option value="auto">Auto</option>
-        <option value="rtl">RTL</option>
-        <option value="ltr">LTR</option>
+        <option value="auto" data-i18n="direction_auto">Auto</option>
+        <option value="rtl" data-i18n="direction_rtl">RTL</option>
+        <option value="ltr" data-i18n="direction_ltr">LTR</option>
       </select>
     </div>
     <div class="row">
       <label>
-        <strong>Per-block bidi tagging</strong>
-        <small>Tag each paragraph with its own direction. Recommended for mixed documents.</small>
+        <strong data-i18n="per_block_bidi">Per-block bidi tagging</strong>
+        <small data-i18n="per_block_bidi_help">Tag each paragraph with its own direction. Recommended for mixed documents.</small>
       </label>
       <input type="checkbox" id="tag" />
     </div>
   </div>
 
-  <h2>Fonts (installed on your computer)</h2>
+  <h2 data-i18n="fonts_section">Fonts (installed on your computer)</h2>
+  <div class="notice">
+    <b data-i18n="fonts_section">Fonts come from your computer only.</b><br>
+    <span data-i18n="fonts_notice">This extension never downloads fonts.</span>
+  </div>
   <div class="card">
     <div class="font-row">
       <div class="font-label">
-        <strong>RTL font stack</strong>
-        <span class="tag">Hebrew / Arabic / Persian</span>
+        <strong data-i18n="rtl_font_stack">RTL font stack</strong>
+        <span class="tag" data-i18n="rtl_font_tag">Hebrew / Arabic / Persian</span>
       </div>
       <input type="text" id="fontRTL" spellcheck="false" />
       <div class="preview" id="previewRTL" dir="rtl" lang="fa">
         سلام دنیا — نمونه متن فارسی. שלום עולם — דוגמת טקסט עברית. مرحبا بالعالم.
       </div>
-      <div class="help">
-        Comma-separated CSS <code>font-family</code> list. The browser tries each
-        name in order and skips any that isn't installed.
-        Recommended first choice: <code>Vazirmatn</code> (Persian) or
-        <code>Droid Arabic Naskh</code> / <code>Noto Naskh Arabic</code> (Arabic).
-        <br>
-        If Vazirmatn is not installed, get it from
-        <a href="https://github.com/rastikerdar/vazirmatn/releases" target="_blank" rel="noopener">github.com/rastikerdar/vazirmatn/releases</a>.
-        For Arabic Naskh, install <b>Noto Naskh Arabic</b> via your OS package
-        manager or from <a href="https://fonts.google.com/noto/specimen/Noto+Naskh+Arabic" target="_blank" rel="noopener">Google Noto</a>.
-      </div>
     </div>
-
     <div class="font-row">
       <div class="font-label">
-        <strong>LTR font stack</strong>
-        <span class="tag">Latin / Cyrillic / Greek</span>
+        <strong data-i18n="ltr_font_stack">LTR font stack</strong>
+        <span class="tag" data-i18n="ltr_font_tag">Latin / Cyrillic / Greek</span>
       </div>
       <input type="text" id="fontLTR" spellcheck="false" />
       <div class="preview" id="previewLTR" dir="ltr">
         Hello world — sample text. Привет мир — пример. Γειά σου κόσμε.
       </div>
-      <div class="help">
-        Same syntax: comma-separated CSS <code>font-family</code> list.
-        Default is your operating system UI font (<code>system-ui</code>).
-      </div>
     </div>
   </div>
 
-  <button class="save" id="save">Save</button>
+  <button class="save" id="save" data-i18n="save">Save</button>
   <span class="status" id="status"></span>
 </main>
+<script src="../lib/i18n.js"></script>
 <script src="options.js"></script>
 </body>
 </html>

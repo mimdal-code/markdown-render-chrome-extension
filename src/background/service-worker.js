@@ -7,6 +7,8 @@ chrome.runtime.onInstalled.addListener((details) => {
       tag: false,
       size: 16,
       sidebar: true,
+      headerLangRTL: 'fa',
+      headerLangLTR: 'en',
       fontRTL: '"Vazirmatn", "Droid Arabic Naskh", "Noto Naskh Arabic", "Tahoma", sans-serif',
       fontLTR: 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif',
     });

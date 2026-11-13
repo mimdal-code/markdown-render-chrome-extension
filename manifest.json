@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Markdown RTL/LTR Reader",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Render Markdown files to beautiful HTML with first-class RTL and LTR support.",
   "minimum_chrome_version": "114",
   "permissions": ["storage", "activeTab"],
@@ -35,9 +35,7 @@
     "resources": [
       "src/viewer/*",
       "src/lib/*",
-      "assets/icons/*",
-      "assets/fonts/*",
-      "docs/screenshots/*"
+      "src/locales.json"
     ],
     "matches": ["<all_urls>"]
   }
