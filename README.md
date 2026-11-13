@@ -28,6 +28,7 @@
 <p align="center">
   <a href="#-download--install"><strong>📥 Download & Install</strong></a> •
   <a href="#features">Features</a> •
+  <a href="#keyboard-shortcuts">Shortcuts</a> •
   <a href="#usage">Usage</a> •
   <a href="#settings">Settings</a> •
   <a href="#fonts">Fonts</a> •
@@ -48,10 +49,8 @@
 On that page, scroll to the **Assets** section and click:
 
 ```
-md-rtl-reader-1.0.0.zip
+md-rtl-reader-<version>.zip
 ```
-
-(Or click any version you want from the [releases page](https://github.com/mimdal-code/markdown-render-chrome-extension/releases).)
 
 ### Step 2 — Extract the zip
 
@@ -77,16 +76,12 @@ The folder should contain `manifest.json` at its root, plus `src/`, `assets/`.
 3. Click **Load unpacked**.
 4. Select the folder you extracted in Step 2 (the one containing `manifest.json`).
 
-The extension appears in the list, enabled.
-
 ### Step 4 — Enable file URL access (for local Markdown)
 
 If you want to open local `.md` files (`file:///…/README.md`), you must grant one extra permission:
 
 1. On the extension card, click **Details**.
 2. Scroll to **"Allow access to file URLs"** and toggle it **on**.
-
-Without this step, the extension works on `http(s)` Markdown URLs but not on local files. It's a Chrome security requirement — no extension can bypass it.
 
 ### Step 5 — Verify it works
 
@@ -97,7 +92,7 @@ file:///path/to/README.md
 https://raw.githubusercontent.com/.../README.md
 ```
 
-The plain-text page should be replaced by the rendered viewer. If it isn't, see **Troubleshooting** below.
+The plain-text page should be replaced by the rendered viewer.
 
 ### Updating to a newer release
 
@@ -110,11 +105,10 @@ The plain-text page should be replaced by the rendered viewer. If it isn't, see 
 
 | Symptom | Cause | Fix |
 |---------|-------|-----|
-| "Manifest file is missing or unreadable" | Wrong folder selected | Select the folder that **directly contains** `manifest.json`, not its parent |
+| "Manifest file is missing or unreadable" | Wrong folder selected | Select the folder that **directly contains** `manifest.json` |
 | Nothing happens on `.md` files | File URLs not enabled, or stale tab | Enable "Allow access to file URLs"; close and reopen the tab |
 | "This extension may have been corrupted" | You moved/deleted the folder after installing | Move it back, or reload via `chrome://extensions` |
 | Extension disappears after Chrome restart | Same as above | Re-load unpacked from the same folder |
-| "Developer mode extensions" warning on every launch | Normal for side-loaded extensions | Ignore, or use the Web Store version once it's published |
 
 > **Why is this manual?** Publishing to the Chrome Web Store requires a **one-time $5 developer registration fee**. Once that's paid, this extension will be listed and installable with one click. For now, the manual install is functionally identical.
 
@@ -140,6 +134,7 @@ The extension is written in plain JavaScript, uses a small self-contained Markdo
 ### 📝 Markdown rendering
 - Headings (H1–H6), paragraphs, bold, italic, strikethrough
 - Ordered / unordered / nested lists
+- **Task lists** — `- [ ]` / `- [x]` render as clickable checkboxes, persisted per file
 - Tables with per-cell bidi
 - Blockquotes with direction-aware side border
 - Fenced code blocks with syntax highlighting
@@ -158,16 +153,58 @@ The extension is written in plain JavaScript, uses a small self-contained Markdo
 - Supported: `css`, `html`, `js` / `javascript`, `java`, `sql`, `php`, `go`, `yaml` / `yml`, `toml`, `json`
 - Unknown languages fall back to escaped plain text
 - Per-theme token colors (Light / Dark / Sepia)
+- Colors preserved in print and PDF export
+
+### 🖨 Print / PDF export
+- **Full multi-page pagination** — the article is no longer clipped to one page
+- **Full page width** — print output spans the whole page, not the narrow screen column
+- **Colored headings** — navy blue family across all six levels
+- **Syntax-highlighted code** — keywords, strings, functions, comments keep their colors in print
+- **Link decoration** — every external link gets a `↗` icon before it and its full URL in parentheses after
+- **Tables** — light-gray header rows, zebra striping, crisp borders
+- **Task lists as glyphs** — `○` for open, `●` in blue for done
+- **Page-break control** — headings never orphan, code blocks and tables never split across pages
+- Works for RTL and LTR documents
+
+### 🔍 In-page search
+- Always-visible search box in the toolbar
+- **Ctrl+F** focuses it (replaces the browser's find dialog)
+- **Exact substring matching** — highlights every occurrence in yellow, active match in orange
+- Live counter shows `N / M` (current position / total matches)
+- **Enter** / **n** → next match, **Shift+Enter** / **N** → previous
+- **Esc** → clears highlights and returns to normal view
+- Auto-scrolls the active match into view
+- Works with Persian, Arabic, and Hebrew text
+
+### 🧭 Sidebar
+- Persistent left sidebar (collapsible with **Ctrl+B** or `[`)
+- **TOC** tab: nested outline by heading level, active-section tracking, smooth scroll
+- **Files** tab: placeholder (coming soon)
+
+### 🔗 Heading anchors
+- Hover any heading → a small `#` appears
+- Click it to copy a permalink (`file://…/README.md#section-id`) to the clipboard
+- Same anchor IDs are used by the TOC — links stay consistent
+
+### ⌨️ Keyboard navigation
+- `j` / `k` → next / previous heading
+- `g g` → scroll to top, `G` → scroll to bottom
+- `[` → toggle sidebar
+- `Ctrl+F` → search, `Esc` → clear
+- `?` → open help modal
+- `Ctrl+B` → toggle sidebar
+
+### ❓ Help modal
+- Press `?` anywhere in the article to open
+- Lists all keyboard shortcuts, search controls, print behavior
+- Includes notes about fonts, privacy, and settings storage
+- Shows the current version and links to GitHub
+- Close with `Esc`, the **✕** button, or by clicking outside the modal
 
 ### 📋 Copy buttons
 - Every code block has a flat **Copy** button in the top corner
 - Uses `navigator.clipboard` with `execCommand` fallback
 - Shows "Copied" feedback for 1.2s
-
-### 🧭 Sidebar
-- Persistent left sidebar (collapsible with **Ctrl+B**)
-- **TOC** tab: nested outline by heading level, active-section tracking, smooth scroll
-- **Files** tab: placeholder (coming soon)
 
 ### 🎛 Layout & themes
 - Three page width modes: **Narrow (620px)**, **Normal (860px)**, **Wide (95%)**
@@ -175,12 +212,33 @@ The extension is written in plain JavaScript, uses a small self-contained Markdo
 - Flat design — no rounded corners, no shadows, no gradients
 - Adjustable base font size (14–22px)
 - Scrollbar always at the far right of the page (or left in RTL)
+- Table rows highlight on hover
 
 ### 🔒 Privacy
 - **No network requests** at runtime
 - **No analytics, no telemetry, no tracking**
 - **No external fonts or scripts**
-- All settings stored locally in `chrome.storage.sync`
+- Settings stored in `chrome.storage.sync`, task states in `chrome.storage.local`
+
+---
+
+## Keyboard shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `j` | Scroll to next heading |
+| `k` | Scroll to previous heading |
+| `g g` | Scroll to top (press `g` twice within 500ms) |
+| `G` | Scroll to bottom |
+| `[` | Toggle sidebar |
+| `Ctrl+B` / `Cmd+B` | Toggle sidebar |
+| `Ctrl+F` / `Cmd+F` | Focus the search box |
+| `Enter` | Jump to next search match |
+| `Shift+Enter` | Jump to previous search match |
+| `n` / `N` | Next / previous match (when search has a query) |
+| `Esc` | Clear search, or close help modal |
+| `?` | Open help modal |
+| `Ctrl+P` / `Cmd+P` | Print / Save as PDF |
 
 ---
 
@@ -201,13 +259,15 @@ The extension injects the viewer automatically. No clicking, no popup, no addres
 
 | Control | What it does |
 |---------|-------------|
-| ☰ | Toggle the sidebar (**Ctrl+B**) |
+| ☰ | Toggle the sidebar |
 | Title | Document name (no file path shown) |
+| **Search** | In-page search (see shortcuts above) |
 | **Width** | Narrow / Normal / Wide |
 | **Theme** | Light / Dark / Sepia |
 | **Direction** | Auto / RTL / LTR |
 | **Per-block bidi** | Tag each block with its own direction |
 | **Size** | Base font size 14–22px |
+| **?** | Open the help modal |
 
 ### Sidebar
 
@@ -221,11 +281,28 @@ Every fenced code block gets:
 - A **language chip** in the top-left corner (top-right in RTL).
 - A **Copy** button in the opposite corner.
 
-### Keyboard shortcuts
+### Task lists
 
-| Shortcut | Action |
-|----------|--------|
-| **Ctrl+B** / **Cmd+B** | Toggle sidebar |
+```markdown
+- [ ] Buy milk
+- [x] Buy bread
+- [ ] Call the plumber
+```
+
+Render as clickable checkboxes. Checked items get a strikethrough and muted color. State is saved per file — reopen the document later and your checkmarks are still there.
+
+### Printing to PDF
+
+1. Press **Ctrl+P** in the viewer.
+2. In the print dialog, expand **More settings** and check **Background graphics** (Chrome doesn't print backgrounds by default).
+3. Choose **Save as PDF**.
+
+The resulting PDF:
+- Spans the full page width
+- Contains every page of the document
+- Keeps colored headings, syntax-highlighted code, table styling, and link icons
+- Shows URLs after every external link
+- Has proper page breaks between sections
 
 ---
 
@@ -306,7 +383,7 @@ After installing a font, restart Chrome so it picks up the new name.
 │   ├─ markdown.js │  parses Markdown → HTML
 │   ├─ highlight.js│  tokenizes fenced code blocks
 │   ├─ direction.js│  detects first strong character
-│   └─ viewer.js   │  TOC, theme, fonts, bidi tagging
+│   └─ viewer.js   │  TOC, search, keyboard, print, bidi
 └────────┬─────────┘
          │ innerHTML
          ▼
@@ -322,6 +399,7 @@ After installing a font, restart Chrome so it picks up the new name.
 - **Bidi correctness.** `<html dir>` is set from the first strong character in the document. `unicode-bidi: plaintext` on every text block lets the browser re-derive direction per paragraph. Optional per-block tagging (`data-dir="rtl|ltr"`) locks direction explicitly for mixed documents.
 - **Direction-aware fonts.** CSS custom properties `--font-rtl` and `--font-ltr` are applied to `[data-dir="rtl"]` and `[data-dir="ltr"]` selectors, so a Hebrew paragraph uses Vazirmatn while an English paragraph right next to it uses system-ui.
 - **Flat design.** `*, *::before, *::after { border-radius: 0 !important; box-shadow: none !important; }` enforces zero rounded corners and zero shadows across the whole viewer.
+- **Print-safe.** The `@media print` block flattens every `height: 100vh` / `overflow: hidden` container so content paginates naturally, then applies its own color palette (dark ink, navy headings, GitHub-style token colors) and link decoration.
 
 ---
 
@@ -344,9 +422,9 @@ After installing a font, restart Chrome so it picks up the new name.
 │   │   ├── content.js          Detects .md, reads <pre>, injects viewer
 │   │   └── content.css
 │   ├── viewer/
-│   │   ├── viewer.html         Viewer UI (sidebar + toolbar + article)
-│   │   ├── viewer.css          Themes, fonts, layout, token colors
-│   │   └── viewer.js           TOC, settings, copy buttons, bidi
+│   │   ├── viewer.html         Viewer UI (sidebar + toolbar + article + help)
+│   │   ├── viewer.css          Themes, fonts, layout, token colors, print
+│   │   └── viewer.js           TOC, search, keyboard, tasks, anchors, help
 │   ├── lib/
 │   │   ├── markdown.js         Self-contained Markdown parser
 │   │   ├── highlight.js        Self-contained syntax highlighter
@@ -363,6 +441,7 @@ After installing a font, restart Chrome so it picks up the new name.
         ├── hebrew.md
         ├── arabic.md
         ├── persian.md
+        ├── persian-english-mixed.md
         ├── en-fa-mixed.md
         └── mixed.md
 ```
@@ -381,7 +460,7 @@ After installing a font, restart Chrome so it picks up the new name.
 | Where | How |
 |-------|-----|
 | Content script | Open DevTools on the `.md` tab → Console (filter by `[md-rtl]`) |
-| Viewer | Right-click inside the rendered article → **Inspect** → it opens DevTools on `viewer.html` |
+| Viewer | Right-click inside the rendered article → **Inspect** |
 | Service worker | `chrome://extensions` → extension card → **Inspect views: service worker** |
 | Options page | Right-click on the options page → **Inspect** |
 
@@ -398,15 +477,15 @@ After installing a font, restart Chrome so it picks up the new name.
 ./package.sh
 ```
 
-Produces `markdown-render-chrome-extension-<version>.zip`.
+Produces `md-rtl-reader-<version>.zip`.
 
 ### Automated releases (GitHub Actions)
 
 Push a version tag and the CI workflow in `.github/workflows/release.yaml` packages the extension and attaches it to a new GitHub Release:
 
 ```bash
-git tag -a v1.0.1 -m "Release v1.0.1"
-git push origin v1.0.1
+git tag -a v1.2.0 -m "Release v1.2.0"
+git push origin v1.2.0
 ```
 
 The `.zip` appears on the [Releases page](https://github.com/mimdal-code/markdown-render-chrome-extension/releases) within a minute or two.
@@ -429,11 +508,12 @@ The `.zip` appears on the [Releases page](https://github.com/mimdal-code/markdow
 ## Roadmap
 
 - [x] v1.0 — Markdown rendering, RTL/LTR, TOC, themes, code highlighting, copy buttons
-- [ ] v1.1 — File browser in sidebar (browse sibling `.md` files in the same directory)
-- [ ] v1.2 — Export to HTML / PDF
-- [ ] v1.3 — Footnotes, task lists, definition lists
-- [ ] v1.4 — Custom theme editor
-- [ ] v1.5 — Publish to Chrome Web Store (pending $5 developer registration)
+- [x] v1.1 — Print/PDF export, heading anchors, keyboard nav, task lists, in-page search, help modal
+- [ ] v1.2 — File browser in sidebar (browse sibling `.md` files in the same directory)
+- [ ] v1.3 — Export to standalone HTML
+- [ ] v1.4 — Footnotes, definition lists
+- [ ] v1.5 — Custom theme editor
+- [ ] v1.6 — Publish to Chrome Web Store (pending $5 developer registration)
 - [ ] v2.0 — Firefox port (MV3 compatible)
 
 ---
@@ -476,6 +556,12 @@ Either (a) the extension isn't installed/reloaded, (b) you're on a `file://` URL
 **Why isn't my font showing up?**
 Fonts are read from your OS. Install the font first, then restart Chrome. Check the live preview in Options to confirm the browser can see it.
 
+**Why does the print preview show only one page?**
+Make sure the extension was reloaded and you opened a **fresh** `.md` tab after reloading — Chrome caches the CSS per tab. If it still clips, verify the extension is on the latest release (the `@media print` block was fixed in v1.1).
+
+**Why don't my PDF colors show?**
+Chrome doesn't print background colors by default. In the print dialog, expand **More settings** and check **Background graphics**. The extension forces `print-color-adjust: exact` on everything inside `@media print`, so colors should appear once that box is checked.
+
 **Can I use it on Firefox?**
 Not yet. Firefox's MV3 implementation differs enough that this needs a separate port. Tracked on the roadmap as v2.0.
 
@@ -499,31 +585,3 @@ Open an [issue](https://github.com/mimdal-code/markdown-render-chrome-extension/
 - Inspired by the classic [Markdown Viewer](https://github.com/simov/markdown-viewer) extension
 - Font recommendations: [Vazirmatn](https://github.com/rastikerdar/vazirmatn) by Saber Rastikerdar, [Noto Naskh Arabic](https://fonts.google.com/noto/specimen/Noto+Naskh+Arabic) by Google
 - Bidi guidance from the [Unicode Bidirectional Algorithm](https://www.unicode.org/reports/tr9/)
-```
-
----
-
-## `LICENSE` (updated copyright holder)
-
-```text
-MIT License
-
-Copyright (c) 2026 Mimdal
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.

@@ -8,36 +8,40 @@
   const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ESC[c]);
 
+  function slugify(text) {
+    return String(text)
+      .toLowerCase()
+      .trim()
+      .replace(/[^\p{L}\p{N}\s-]/gu, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '') || 'section';
+  }
+
   function inline(text) {
-    // Protect code spans first
     const codes = [];
     text = text.replace(/`([^`]+)`/g, (_, c) => {
       codes.push(`<code>${esc(c)}</code>`);
       return `\u0000CODE${codes.length - 1}\u0000`;
     });
 
-    // Images ![alt](src)
     text = text.replace(/!\[([^\]]*)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
       (_, alt, src, title) =>
         `<img src="${esc(src)}" alt="${esc(alt)}"${title ? ` title="${esc(title)}"` : ''}>`);
 
-    // Links [text](href)
     text = text.replace(/\[([^\]]+)\]\(([^)\s]+)(?:\s+"([^"]*)")?\)/g,
       (_, t, href, title) =>
         `<a href="${esc(href)}"${title ? ` title="${esc(title)}"` : ''} rel="noopener noreferrer">${t}</a>`);
 
-    // Autolinks <http://...>
     text = text.replace(/&lt;(https?:\/\/[^\s&]+)&gt;/g, (_, u) =>
       `<a href="${esc(u)}" rel="noopener noreferrer">${esc(u)}</a>`);
 
-    // Bold, italic, strike
     text = text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
     text = text.replace(/__([^_]+)__/g, '<strong>$1</strong>');
     text = text.replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<em>$2</em>');
     text = text.replace(/(^|[^_])_([^_\n]+)_/g, '$1<em>$2</em>');
     text = text.replace(/~~([^~]+)~~/g, '<del>$1</del>');
 
-    // Restore code spans
     text = text.replace(/\u0000CODE(\d+)\u0000/g, (_, i) => codes[+i]);
     return text;
   }
@@ -46,6 +50,7 @@
     const lines = String(src).replace(/\r\n?/g, '\n').split('\n');
     const out = [];
     let i = 0;
+    const usedIds = new Set();
 
     const isBlank = (l) => /^\s*$/.test(l);
 
@@ -63,7 +68,7 @@
           buf.push(lines[i]);
           i++;
         }
-        i++; // skip closing fence
+        i++;
         const raw = buf.join('\n');
         const hl = (global.HL && typeof global.HL.highlight === 'function')
           ? global.HL.highlight(raw, lang)
@@ -77,11 +82,22 @@
         continue;
       }
 
-      // ATX heading
+      // ATX heading — give it a stable id + anchor wrapper
       const h = line.match(/^(#{1,6})\s+(.*)$/);
       if (h) {
         const lvl = h[1].length;
-        out.push(`<h${lvl}>${inline(h[2].trim())}</h${lvl}>`);
+        const text = h[2].trim();
+        let id = slugify(text);
+        let n = 2;
+        while (usedIds.has(id)) id = `${slugify(text)}-${n++}`;
+        usedIds.add(id);
+        out.push(
+          `<h${lvl} id="${esc(id)}">`
+          + `<span class="heading-text">${inline(text)}</span>`
+          + `<button class="heading-anchor" type="button" data-anchor="${esc(id)}" `
+          + `title="Copy link to this heading" aria-label="Copy link">#</button>`
+          + `</h${lvl}>`
+        );
         i++;
         continue;
       }
@@ -104,7 +120,7 @@
         continue;
       }
 
-      // Table (GFM)
+      // Table
       if (/^\s*\|.*\|\s*$/.test(line) && i + 1 < lines.length && /^\s*\|?[\s:|-]+\|?\s*$/.test(lines[i + 1])) {
         const header = splitRow(line);
         const align = splitRow(lines[i + 1]).map((c) => {
@@ -137,16 +153,31 @@
         continue;
       }
 
-      // Unordered list
+      // Unordered list — with task-list support
       if (/^\s*[-*+]\s+/.test(line)) {
-        const buf = [];
+        const items = [];
         const indent = line.match(/^\s*/)[0].length;
         while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i]) &&
                lines[i].match(/^\s*/)[0].length >= indent) {
-          buf.push(lines[i].replace(/^\s*[-*+]\s+/, ''));
+          const body = lines[i].replace(/^\s*[-*+]\s+/, '');
+          const task = body.match(/^\[([ xX])\]\s+(.*)$/);
+          if (task) {
+            const checked = task[1] !== ' ';
+            items.push(
+              `<li class="task-item">`
+              + `<label class="task-label">`
+              + `<input type="checkbox" class="task-checkbox"${checked ? ' checked' : ''} data-task>`
+              + `<span>${inline(task[2])}</span>`
+              + `</label>`
+              + `</li>`
+            );
+          } else {
+            items.push(`<li>${inline(body)}</li>`);
+          }
           i++;
         }
-        out.push('<ul>' + buf.map((b) => `<li>${inline(b)}</li>`).join('') + '</ul>');
+        const hasTasks = items.some((s) => s.includes('task-item'));
+        out.push(`<ul${hasTasks ? ' class="task-list"' : ''}>${items.join('')}</ul>`);
         continue;
       }
 
@@ -184,5 +215,5 @@
     return line.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|');
   }
 
-  global.MD = { render, esc };
+  global.MD = { render, esc, slugify };
 })(typeof window !== 'undefined' ? window : self);

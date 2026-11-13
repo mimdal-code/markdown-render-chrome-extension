@@ -34,6 +34,31 @@
         <button class="icon-btn" id="toggle-sidebar" title="Toggle sidebar (Ctrl+B)" aria-label="Toggle sidebar">
           <span>☰</span>
         </button>
+        <div class="doc-title" id="doc-title">Markdown</div>
+
+        <div class="search-wrap" id="search-wrap">
+          <input
+            type="text"
+            id="search-input"
+            class="search-input"
+            placeholder="Search…"
+            spellcheck="false"
+            autocomplete="off"
+            aria-label="Search in document"
+          />
+          <span class="search-count" id="search-count"></span>
+          <button class="icon-btn search-prev" id="search-prev" title="Previous match (Shift+Enter)" aria-label="Previous match">
+            <span>↑</span>
+          </button>
+          <button class="icon-btn search-next" id="search-next" title="Next match (Enter)" aria-label="Next match">
+            <span>↓</span>
+          </button>
+          <button class="icon-btn search-clear" id="search-clear" title="Clear search (Esc)" aria-label="Clear search">
+            <span>✕</span>
+          </button>
+        </div>
+
+        <div class="spacer"></div>
 
         <label class="ctrl">
           <span>Width</span>
@@ -67,17 +92,94 @@
           <span>Size</span>
           <input type="range" id="size" min="14" max="22" step="1" value="16" />
         </label>
+        <button class="icon-btn" id="help-btn" title="Help (?)" aria-label="Help">?</button>
       </header>
 
-      <!-- Scrollable region: scrollbar hugs the far-right edge of the page -->
       <div class="main-scroll" id="main-scroll">
         <article id="content" class="markdown-body" aria-live="polite"></article>
       </div>
     </main>
   </div>
 
-  <script src="../lib/markdown.js"></script>
+  <!-- Help modal -->
+  <div class="help-backdrop" id="help-backdrop" hidden>
+    <div class="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+      <div class="help-header">
+        <h2 class="help-title" id="help-title">Keyboard shortcuts &amp; help</h2>
+        <button class="help-close" id="help-close" title="Close (Esc)" aria-label="Close">✕</button>
+      </div>
+      <div class="help-body">
+        <div class="help-section">
+          <h3>Navigation</h3>
+          <table>
+            <tr><td><span class="help-kbd">j</span></td><td>Scroll to the next heading</td></tr>
+            <tr><td><span class="help-kbd">k</span></td><td>Scroll to the previous heading</td></tr>
+            <tr><td><span class="help-kbd">g</span> <span class="help-kbd">g</span></td><td>Scroll to top (press <span class="help-kbd">g</span> twice quickly)</td></tr>
+            <tr><td><span class="help-kbd">G</span></td><td>Scroll to bottom</td></tr>
+            <tr><td><span class="help-kbd">[</span></td><td>Toggle the sidebar</td></tr>
+            <tr><td><span class="help-kbd">Ctrl</span> + <span class="help-kbd">B</span></td><td>Toggle the sidebar</td></tr>
+          </table>
+        </div>
+
+        <div class="help-section">
+          <h3>Search</h3>
+          <table>
+            <tr><td><span class="help-kbd">Ctrl</span> + <span class="help-kbd">F</span></td><td>Focus the search box</td></tr>
+            <tr><td><span class="help-kbd">Enter</span></td><td>Jump to the next match</td></tr>
+            <tr><td><span class="help-kbd">Shift</span> + <span class="help-kbd">Enter</span></td><td>Jump to the previous match</td></tr>
+            <tr><td><span class="help-kbd">n</span> / <span class="help-kbd">N</span></td><td>Next / previous match (when search has a query)</td></tr>
+            <tr><td><span class="help-kbd">Esc</span></td><td>Clear the search and return to normal view</td></tr>
+          </table>
+        </div>
+
+        <div class="help-section">
+          <h3>Content</h3>
+          <table>
+            <tr><td>Hover a heading</td><td>Click the <span class="help-kbd">#</span> to copy a permalink</td></tr>
+            <tr><td>Click a code block's <strong>Copy</strong> button</td><td>Copy the whole block to the clipboard</td></tr>
+            <tr><td>Click a task checkbox</td><td>Toggle it — the state is saved per file</td></tr>
+            <tr><td>Click a TOC entry</td><td>Scroll to that heading</td></tr>
+          </table>
+        </div>
+
+        <div class="help-section">
+          <h3>Print</h3>
+          <table>
+            <tr><td><span class="help-kbd">Ctrl</span> + <span class="help-kbd">P</span></td><td>Print or save as PDF (chrome UI is hidden automatically)</td></tr>
+          </table>
+        </div>
+
+        <div class="help-section">
+          <h3>Notes</h3>
+          <div class="help-note">
+            This extension runs entirely offline. No network requests, no telemetry,
+            no external fonts. All settings are stored in <code>chrome.storage.sync</code>
+            (synced across your Chrome profiles) and task checkboxes are stored in
+            <code>chrome.storage.local</code> (per machine).
+          </div>
+          <div class="help-note">
+            For best results with Persian text, install the
+            <strong>Vazirmatn</strong> font on your system. For Arabic, install
+            <strong>Noto Naskh Arabic</strong> or <strong>Droid Arabic Naskh</strong>.
+            The viewer never downloads fonts — it only uses what's installed on
+            your computer. See <em>Options → Fonts</em> for details.
+          </div>
+        </div>
+
+        <div class="help-section">
+          <h3>About</h3>
+          <table>
+            <tr><td>Version</td><td><span id="help-version">1.1.0</span></td></tr>
+            <tr><td>Repository</td><td><a href="https://github.com/mimdal-code/markdown-render-chrome-extension" target="_blank" rel="noopener">github.com/mimdal-code/markdown-render-chrome-extension</a></td></tr>
+            <tr><td>Releases</td><td><a href="https://github.com/mimdal-code/markdown-render-chrome-extension/releases" target="_blank" rel="noopener">GitHub Releases</a></td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="../lib/highlight.js"></script>
+  <script src="../lib/markdown.js"></script>
   <script src="../lib/direction.js"></script>
   <script src="viewer.js"></script>
 </body>

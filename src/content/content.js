@@ -1,16 +1,24 @@
+// Runs ONLY on .md / .markdown pages.
+// Reads the raw markdown DIRECTLY from the page's <pre> element.
+// No fetch → no CORS → works on file:// out of the box.
 (() => {
   'use strict';
 
-  function looksLikeMarkdownPage() {
-    const url = location.href;
-    if (/\.(md|markdown)(\?|#|$)/i.test(url)) return true;
-    if (location.protocol === 'file:') return true;
-    return false;
+  const MD_EXT = /\.(md|markdown)(?:[?#]|$)/i;
+
+  function isMarkdownUrl() {
+    try {
+      const u = new URL(location.href);
+      return MD_EXT.test(u.pathname);
+    } catch {
+      return MD_EXT.test(location.href);
+    }
   }
 
   function extractRawText() {
     const pre = document.querySelector('body > pre');
     if (pre && pre.textContent) return pre.textContent;
+
     const body = document.body;
     if (body && body.children.length <= 1) {
       return body.innerText || body.textContent || '';
@@ -20,11 +28,14 @@
 
   function fileNameFromUrl(url) {
     try {
-      const clean = url.split('#')[0].split('?')[0];
-      const last = clean.substring(clean.lastIndexOf('/') + 1);
+      const u = new URL(url);
+      const last = u.pathname.substring(u.pathname.lastIndexOf('/') + 1);
       return decodeURIComponent(last) || 'Markdown';
     } catch {
-      return 'Markdown';
+      const clean = String(url).split('#')[0].split('?')[0];
+      const last = clean.substring(clean.lastIndexOf('/') + 1);
+      try { return decodeURIComponent(last) || 'Markdown'; }
+      catch { return 'Markdown'; }
     }
   }
 
@@ -46,9 +57,8 @@
         {
           type: 'MD_RTL_RENDER',
           markdown: text,
-          // Header shows ONLY the file name — no URL
           title: fileNameFromUrl(location.href),
-          url: location.href
+          url: location.href,
         },
         '*'
       );
@@ -60,7 +70,8 @@
   }
 
   function init() {
-    if (!looksLikeMarkdownPage()) return;
+    // Only run on Markdown files — never on other file types.
+    if (!isMarkdownUrl()) return;
     if (document.getElementById('md-rtl-viewer-root')) return;
 
     const text = extractRawText();
