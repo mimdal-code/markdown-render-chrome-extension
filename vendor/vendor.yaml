@@ -1,0 +1,32 @@
+# vendor/vendor.yaml
+# This file instructs the CI/CD pipeline (and developers) on how to fetch
+# the external dependencies that are excluded from git via .gitignore.
+
+dependencies:
+  chess.js:
+    version: "1.4.0"
+    files:
+      - source: "https://cdn.jsdelivr.net/npm/chess.js@1.4.0/dist/cjs/chess.js"
+        dest: "vendor/chess.js/1.4.0/chess.js"
+      - source: "https://raw.githubusercontent.com/jhlywa/chess.js/master/LICENSE"
+        dest: "vendor/chess.js/1.4.0/LICENSE"
+
+  cburnett:
+    version: "1.0.0"
+    files:
+      # Pieces
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wK.svg", dest: "vendor/cburnett/1.0.0/pieces/wK.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wQ.svg", dest: "vendor/cburnett/1.0.0/pieces/wQ.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wR.svg", dest: "vendor/cburnett/1.0.0/pieces/wR.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wB.svg", dest: "vendor/cburnett/1.0.0/pieces/wB.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wN.svg", dest: "vendor/cburnett/1.0.0/pieces/wN.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/wP.svg", dest: "vendor/cburnett/1.0.0/pieces/wP.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bK.svg", dest: "vendor/cburnett/1.0.0/pieces/bK.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bQ.svg", dest: "vendor/cburnett/1.0.0/pieces/bQ.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bR.svg", dest: "vendor/cburnett/1.0.0/pieces/bR.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bB.svg", dest: "vendor/cburnett/1.0.0/pieces/bB.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bN.svg", dest: "vendor/cburnett/1.0.0/pieces/bN.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/bP.svg", dest: "vendor/cburnett/1.0.0/pieces/bP.svg" }
+      # License
+      - source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/LICENSE"
+        dest: "vendor/cburnett/1.0.0/LICENSE"

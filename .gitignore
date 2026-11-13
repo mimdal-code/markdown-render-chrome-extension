@@ -4,4 +4,9 @@ node_modules/
 dist/
 *.zip
 releases/
-vendor/
+
+# Ignore all vendor files/folders
+vendor/*
+
+# Except the vendor.yaml file
+!vendor/vendor.yaml
