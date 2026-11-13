@@ -42,7 +42,6 @@
   let currentDocUrl = '';
   let settings = { ...DEFAULTS };
 
-  /* ---------- Settings ---------- */
   function loadSettings() {
     return new Promise((resolve) => {
       try {
@@ -57,17 +56,44 @@
     try { chrome.storage.sync.set(patch); } catch {}
   }
 
-  /* ================================================================
-     Locale switching
-     The header follows the DOCUMENT direction. The document direction
-     is stored in <html dir="…"> after applyDir() runs. So every time
-     applyDir() completes, we re-translate the toolbar using the pack
-     matching the header's direction.
-     ================================================================ */
+  /* ---------- Task-list state ---------- */
+  const TASK_PREFIX = 'md-rtl-task:';
+
+  function taskStorageKey(li) {
+    const list = li.closest('ul');
+    if (!list) return null;
+    const allLists = Array.from(content.querySelectorAll('ul'));
+    const listIdx = allLists.indexOf(list);
+    const itemIdx = li.dataset.taskIndex;
+    if (listIdx < 0 || itemIdx == null) return null;
+    const docKey = (currentDocUrl || location.href).split('#')[0];
+    return `${TASK_PREFIX}${docKey}:${listIdx}:${itemIdx}`;
+  }
+
+  function restoreTaskState() {
+    content.querySelectorAll('li.task-item').forEach((li) => {
+      const key = taskStorageKey(li);
+      if (!key) return;
+      let stored = null;
+      try { stored = localStorage.getItem(key); } catch {}
+      if (stored === null) return;
+      const checked = stored === '1';
+      const cb = li.querySelector('input.task-checkbox');
+      if (cb) cb.checked = checked;
+      li.classList.toggle('task-done', checked);
+    });
+  }
+
+  function saveTaskState(li, checked) {
+    const key = taskStorageKey(li);
+    if (!key) return;
+    try { localStorage.setItem(key, checked ? '1' : '0'); } catch {}
+  }
+
+  /* ---------- Locale switching ---------- */
   function currentHeaderDir() {
     return toolbar.getAttribute('dir') === 'rtl' ? 'rtl' : 'ltr';
   }
-
   function langForDir(dir) {
     return dir === 'rtl' ? settings.headerLangRTL : settings.headerLangLTR;
   }
@@ -77,21 +103,12 @@
     const lang = langForDir(dir);
     const t = (key) => window.I18N.t(key, lang);
 
-    // Toolbar direction attribute drives its own layout
     toolbar.setAttribute('dir', dir);
-
-    // Toolbar labels via [data-i18n]
     toolbar.querySelectorAll('[data-i18n]').forEach((el) => {
-      const key = el.getAttribute('data-i18n');
-      el.textContent = t(key);
+      el.textContent = t(el.getAttribute('data-i18n'));
     });
 
-    // Tooltips / aria-labels
-    const setAttr = (el, name, key) => {
-      if (!el) return;
-      const v = t(key);
-      el.setAttribute(name, v);
-    };
+    const setAttr = (el, name, key) => { if (el) el.setAttribute(name, t(key)); };
     setAttr(toggleBtn, 'title', 'toggle_sidebar');
     setAttr(toggleBtn, 'aria-label', 'toggle_sidebar');
     setAttr(searchInput, 'placeholder', 'search_placeholder');
@@ -105,13 +122,10 @@
     setAttr(helpBtn, 'title', 'help');
     setAttr(helpBtn, 'aria-label', 'help');
 
-    // Sidebar tabs also follow document direction, same as header
     sidebar.querySelectorAll('[data-i18n]').forEach((el) => {
-      const key = el.getAttribute('data-i18n');
-      el.textContent = t(key);
+      el.textContent = t(el.getAttribute('data-i18n'));
     });
 
-    // Refresh search count text if matches exist
     if (searchMatches.length) updateSearchCount();
   }
 
@@ -127,7 +141,6 @@
     if (r && r.trim()) root.style.setProperty('--font-rtl', r);
     if (l && l.trim()) root.style.setProperty('--font-ltr', l);
   }
-
   function applyDir(d) {
     if (d === 'auto') {
       const primary = window.Dir.detectDocumentDir(currentMarkdown);
@@ -139,10 +152,8 @@
       document.documentElement.setAttribute('lang', d === 'rtl' ? 'fa' : 'en');
       toolbar.setAttribute('dir', d);
     }
-    // Header/sidebar labels are language-bound to the direction just applied
     applyHeaderLocale();
   }
-
   function applySidebar(v) { app.classList.toggle('sidebar-collapsed', !v); }
 
   /* ---------- Per-block bidi tagging ---------- */
@@ -158,6 +169,14 @@
       const d = window.Dir.dirOfElement(el);
       if (d === 'rtl' || d === 'ltr') el.setAttribute('data-dir', d);
       else el.removeAttribute('data-dir');
+    });
+  }
+
+  function tagHeadings() {
+    content.querySelectorAll('h1, h2, h3, h4, h5, h6').forEach((h) => {
+      const d = window.Dir.firstStrong(h.textContent || '');
+      if (d === 'rtl' || d === 'ltr') h.setAttribute('data-dir', d);
+      else h.removeAttribute('data-dir');
     });
   }
 
@@ -199,16 +218,6 @@
   }
 
   /* ---------- TOC ---------- */
-  function slugify(text, used) {
-    const base = text.toLowerCase().trim()
-      .replace(/[^\p{L}\p{N}\s-]/gu, '')
-      .replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'section';
-    let slug = base, n = 2;
-    while (used.has(slug)) slug = `${base}-${n++}`;
-    used.add(slug);
-    return slug;
-  }
-
   function buildToc() {
     toc.innerHTML = '';
     const headings = content.querySelectorAll('h1, h2, h3, h4, h5, h6');
@@ -219,16 +228,15 @@
       toc.appendChild(e);
       return;
     }
-    const used = new Set();
     headings.forEach((h) => {
       const level = +h.tagName.slice(1);
       const text = h.textContent || '';
-      if (!h.id) h.id = slugify(text, used);
       const a = document.createElement('a');
       a.className = `toc-item lvl-${level}`;
       a.href = `#${h.id}`;
       a.textContent = text;
       a.dataset.target = h.id;
+      a.setAttribute('dir', 'auto');
       a.addEventListener('click', (e) => {
         e.preventDefault();
         const offset = h.getBoundingClientRect().top - mainScroll.getBoundingClientRect().top;
@@ -277,6 +285,14 @@
   function render(md) {
     currentMarkdown = md || '';
     content.innerHTML = window.MD.render(currentMarkdown);
+
+    // Mount chess blocks (FEN + PGN) from ```chess fenced code blocks
+    if (window.ChessBlocks && typeof window.ChessBlocks.mountAll === 'function') {
+      try { window.ChessBlocks.mountAll(content); }
+      catch (e) { console.warn('[md-rtl] chess mount failed', e); }
+    }
+
+    tagHeadings();
     rewriteRelativeUrls(content);
     content.querySelectorAll('a[href]').forEach((a) => {
       const href = a.getAttribute('href') || '';
@@ -287,7 +303,8 @@
     });
     tagBlocks();
     buildToc();
-    // Translate copy buttons using the header language for the current direction
+    restoreTaskState();
+
     const lang = langForDir(currentHeaderDir());
     content.querySelectorAll('.code-copy').forEach((btn) => {
       if (!btn.textContent || btn.textContent === 'Copy') {
@@ -360,8 +377,7 @@
 
     searchMatches = Array.from(content.querySelectorAll('mark.search-hit'));
     if (!searchMatches.length) {
-      const lang = langForDir(currentHeaderDir());
-      searchCount.textContent = window.I18N.t('search_no_results', lang);
+      searchCount.textContent = window.I18N.t('search_no_results', langForDir(currentHeaderDir()));
       searchIndex = -1;
       return;
     }
@@ -371,14 +387,10 @@
   }
 
   function updateSearchCount() {
-    if (!searchMatches.length) {
-      searchCount.textContent = '';
-      return;
-    }
+    if (!searchMatches.length) { searchCount.textContent = ''; return; }
     const lang = langForDir(currentHeaderDir());
-    const total = searchMatches.length;
-    const n = searchIndex + 1;
-    searchCount.textContent = window.I18N.tReplace('search_results', { n, total }, lang);
+    searchCount.textContent = window.I18N.tReplace('search_results',
+      { n: searchIndex + 1, total: searchMatches.length }, lang);
   }
 
   function focusMatch(i) {
@@ -393,14 +405,8 @@
     updateSearchCount();
   }
 
-  function nextMatch() {
-    if (!searchMatches.length) return;
-    focusMatch(searchIndex + 1);
-  }
-  function prevMatch() {
-    if (!searchMatches.length) return;
-    focusMatch(searchIndex - 1);
-  }
+  function nextMatch() { if (searchMatches.length) focusMatch(searchIndex + 1); }
+  function prevMatch() { if (searchMatches.length) focusMatch(searchIndex - 1); }
 
   searchInput.addEventListener('input', () => {
     if (searchDebounce) clearTimeout(searchDebounce);
@@ -428,20 +434,39 @@
     searchInput.focus();
   });
 
-  /* ---------- Copy button (delegated) ---------- */
+  /* ---------- Delegated content clicks ---------- */
   content.addEventListener('click', async (e) => {
-    const btn = e.target.closest('.code-copy');
-    if (!btn) return;
+    const copyBtn = e.target.closest('.code-copy');
+    const anchorBtn = e.target.closest('.heading-anchor');
 
-    const wrap = btn.closest('.code-block');
+    if (anchorBtn) {
+      const id = anchorBtn.getAttribute('data-anchor');
+      const url = currentDocUrl ? `${currentDocUrl.split('#')[0]}#${id}` : `#${id}`;
+      try { await navigator.clipboard.writeText(url); }
+      catch {
+        const ta = document.createElement('textarea');
+        ta.value = url; ta.style.position = 'fixed'; ta.style.top = '-1000px';
+        document.body.appendChild(ta); ta.select();
+        try { document.execCommand('copy'); } catch {}
+        document.body.removeChild(ta);
+      }
+      const old = anchorBtn.textContent;
+      anchorBtn.textContent = '✓';
+      setTimeout(() => { anchorBtn.textContent = old; }, 900);
+      return;
+    }
+
+    if (!copyBtn) return;
+
+    const wrap = copyBtn.closest('.code-block');
     const codeEl = wrap && wrap.querySelector('pre code');
     if (!codeEl) return;
 
     const lang = langForDir(currentHeaderDir());
     const text = codeEl.textContent || '';
     const reset = () => {
-      btn.textContent = window.I18N.t('copy', lang);
-      btn.classList.remove('copied');
+      copyBtn.textContent = window.I18N.t('copy', lang);
+      copyBtn.classList.remove('copied');
     };
 
     try {
@@ -450,8 +475,8 @@
       } else {
         throw new Error('no clipboard');
       }
-      btn.textContent = window.I18N.t('copied', lang);
-      btn.classList.add('copied');
+      copyBtn.textContent = window.I18N.t('copied', lang);
+      copyBtn.classList.add('copied');
       setTimeout(reset, 1200);
     } catch {
       const ta = document.createElement('textarea');
@@ -466,14 +491,24 @@
       try { ok = document.execCommand('copy'); } catch {}
       document.body.removeChild(ta);
       if (ok) {
-        btn.textContent = window.I18N.t('copied', lang);
-        btn.classList.add('copied');
+        copyBtn.textContent = window.I18N.t('copied', lang);
+        copyBtn.classList.add('copied');
         setTimeout(reset, 1200);
       } else {
-        btn.textContent = window.I18N.t('copy_failed', lang);
+        copyBtn.textContent = window.I18N.t('copy_failed', lang);
         setTimeout(reset, 1200);
       }
     }
+  });
+
+  /* ---------- Task checkbox changes ---------- */
+  content.addEventListener('change', (e) => {
+    const cb = e.target.closest('input.task-checkbox');
+    if (!cb) return;
+    const li = cb.closest('li.task-item');
+    if (!li) return;
+    li.classList.toggle('task-done', cb.checked);
+    saveTaskState(li, cb.checked);
   });
 
   /* ---------- Help modal ---------- */
@@ -514,9 +549,7 @@
     box.appendChild(body);
     box.appendChild(closeBtn);
     overlay.appendChild(box);
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) overlay.remove();
-    });
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
     document.body.appendChild(overlay);
   }
   helpBtn.addEventListener('click', showHelp);
@@ -529,7 +562,6 @@
     docTitle.title = e.data.title || '';
 
     settings = await loadSettings();
-
     await window.I18N.load();
 
     render(e.data.markdown);
@@ -545,9 +577,6 @@
     applySize(settings.size);
     applySidebar(settings.sidebar);
     applyFonts(settings.fontRTL, settings.fontLTR);
-
-    // Direction is applied LAST — it triggers applyHeaderLocale(),
-    // so the header language matches the direction just set.
     applyDir(settings.dir);
     tagBlocks();
   });
@@ -583,12 +612,9 @@
     saveSettings({ width: widthSel.value });
   });
   dirSel.addEventListener('change', () => {
-    // applyDir re-runs applyHeaderLocale(), so the header switches
-    // to the language matching the newly-chosen direction.
     applyDir(dirSel.value);
     saveSettings({ dir: dirSel.value });
     tagBlocks();
-    // Re-translate copy buttons and search counter for the new language
     const lang = langForDir(currentHeaderDir());
     content.querySelectorAll('.code-copy').forEach((btn) => {
       if (!btn.classList.contains('copied')) btn.textContent = window.I18N.t('copy', lang);
@@ -620,6 +646,24 @@
       searchInput.select();
       return;
     }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'p') {
+      const article = content;
+      const scrollBox = mainScroll;
+      console.log('[md-rtl] Ctrl+P print requested', {
+        docUrl: currentDocUrl,
+        theme: document.documentElement.getAttribute('data-theme'),
+        width: document.documentElement.getAttribute('data-width'),
+        articleHeight: article ? article.scrollHeight : null,
+        articleWidth: article ? article.scrollWidth : null,
+        scrollBoxHeight: scrollBox ? scrollBox.clientHeight : null,
+        scrollBoxScrollHeight: scrollBox ? scrollBox.scrollHeight : null,
+        viewportHeight: window.innerHeight,
+        viewportWidth: window.innerWidth,
+        pageCount: article && scrollBox
+          ? Math.ceil(scrollBox.scrollHeight / scrollBox.clientHeight)
+          : null,
+      });
+    }
     if (typing) return;
     if (e.key === '?') {
       e.preventDefault();
@@ -643,9 +687,6 @@
     applySize(settings.size);
     applySidebar(settings.sidebar);
     applyFonts(settings.fontRTL, settings.fontLTR);
-
-    // Empty document → auto-detection returns 'ltr', so the header
-    // starts in the LTR language until a real document arrives.
     applyDir(settings.dir);
   })();
 })();

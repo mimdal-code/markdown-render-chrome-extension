@@ -1,21 +1,24 @@
 // Tiny, dependency-free Markdown → HTML renderer.
 // Safe by default: raw HTML in source is escaped before our renderer runs.
-// Fenced code blocks are highlighted by window.HL if it's loaded
-// (src/lib/highlight.js) and get a flat "Copy" button.
+// Fenced code blocks are highlighted by window.HL if it's loaded.
+// Headings get dir="auto" so each heading follows its OWN text direction.
+// Unordered lists support GFM task-list syntax: - [ ] / - [x]
+// ```chess fences are emitted as plain <pre><code class="language-chess">
+// so chess.js (src/lib/chess.js) can replace them after rendering.
 (function (global) {
   'use strict';
 
   const ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ESC[c]);
 
-  function slugify(text) {
-    return String(text)
-      .toLowerCase()
-      .trim()
+  function slugify(text, used) {
+    const base = text.toLowerCase().trim()
       .replace(/[^\p{L}\p{N}\s-]/gu, '')
-      .replace(/\s+/g, '-')
-      .replace(/-+/g, '-')
-      .replace(/^-|-$/g, '') || 'section';
+      .replace(/\s+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '') || 'section';
+    let slug = base, n = 2;
+    while (used && used.has(slug)) slug = `${base}-${n++}`;
+    if (used) used.add(slug);
+    return slug;
   }
 
   function inline(text) {
@@ -50,9 +53,9 @@
     const lines = String(src).replace(/\r\n?/g, '\n').split('\n');
     const out = [];
     let i = 0;
-    const usedIds = new Set();
 
     const isBlank = (l) => /^\s*$/.test(l);
+    const usedHeadingIds = new Set();
 
     while (i < lines.length) {
       let line = lines[i];
@@ -70,6 +73,19 @@
         }
         i++;
         const raw = buf.join('\n');
+
+                // Chess: emit a mount point + a sibling <script type="text/plain">
+        // holding the raw text byte-for-byte. The only HTML-breaking
+        // sequence inside a <script> is </script, which we neutralize.
+        if (lang.toLowerCase() === 'chess') {
+          const safe = raw.replace(/<\/script/gi, '<\\/script');
+          out.push(
+            `<div class="chess-block"></div>`
+            + `<script type="text/plain" class="chess-src">${safe}</script>`
+          );
+          continue;
+        }
+
         const hl = (global.HL && typeof global.HL.highlight === 'function')
           ? global.HL.highlight(raw, lang)
           : esc(raw);
@@ -82,20 +98,16 @@
         continue;
       }
 
-      // ATX heading — give it a stable id + anchor wrapper
+      // ATX heading
       const h = line.match(/^(#{1,6})\s+(.*)$/);
       if (h) {
         const lvl = h[1].length;
         const text = h[2].trim();
-        let id = slugify(text);
-        let n = 2;
-        while (usedIds.has(id)) id = `${slugify(text)}-${n++}`;
-        usedIds.add(id);
+        const id = slugify(text, usedHeadingIds);
         out.push(
-          `<h${lvl} id="${esc(id)}">`
+          `<h${lvl} id="${esc(id)}" dir="auto">`
           + `<span class="heading-text">${inline(text)}</span>`
-          + `<button class="heading-anchor" type="button" data-anchor="${esc(id)}" `
-          + `title="Copy link to this heading" aria-label="Copy link">#</button>`
+          + `<button class="heading-anchor" type="button" data-anchor="${esc(id)}" title="Copy link to this heading" aria-label="Copy link">#</button>`
           + `</h${lvl}>`
         );
         i++;
@@ -153,31 +165,30 @@
         continue;
       }
 
-      // Unordered list — with task-list support
+      // Unordered list (with task list support)
       if (/^\s*[-*+]\s+/.test(line)) {
-        const items = [];
+        const buf = [];
         const indent = line.match(/^\s*/)[0].length;
         while (i < lines.length && /^\s*[-*+]\s+/.test(lines[i]) &&
                lines[i].match(/^\s*/)[0].length >= indent) {
-          const body = lines[i].replace(/^\s*[-*+]\s+/, '');
-          const task = body.match(/^\[([ xX])\]\s+(.*)$/);
-          if (task) {
-            const checked = task[1] !== ' ';
-            items.push(
-              `<li class="task-item">`
-              + `<label class="task-label">`
-              + `<input type="checkbox" class="task-checkbox"${checked ? ' checked' : ''} data-task>`
-              + `<span>${inline(task[2])}</span>`
-              + `</label>`
-              + `</li>`
-            );
-          } else {
-            items.push(`<li>${inline(body)}</li>`);
-          }
+          buf.push(lines[i].replace(/^\s*[-*+]\s+/, ''));
           i++;
         }
-        const hasTasks = items.some((s) => s.includes('task-item'));
-        out.push(`<ul${hasTasks ? ' class="task-list"' : ''}>${items.join('')}</ul>`);
+        const items = buf.map((rawItem, idx) => {
+          const task = rawItem.match(/^\[([ xX])\]\s+(.*)$/);
+          if (task) {
+            const checked = task[1] !== ' ';
+            const text = task[2];
+            return (
+              `<li class="task-item${checked ? ' task-done' : ''}" data-task-index="${idx}">`
+              + `<input type="checkbox" class="task-checkbox"${checked ? ' checked' : ''} data-task-index="${idx}" aria-label="Task checkbox">`
+              + `<span class="task-text">${inline(text)}</span>`
+              + `</li>`
+            );
+          }
+          return `<li>${inline(rawItem)}</li>`;
+        });
+        out.push('<ul>' + items.join('') + '</ul>');
         continue;
       }
 
@@ -215,5 +226,5 @@
     return line.replace(/^\s*\|/, '').replace(/\|\s*$/, '').split('|');
   }
 
-  global.MD = { render, esc, slugify };
+  global.MD = { render, esc };
 })(typeof window !== 'undefined' ? window : self);

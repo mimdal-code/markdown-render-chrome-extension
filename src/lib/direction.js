@@ -22,18 +22,28 @@
     return firstStrong(t);
   }
 
-  // Determine the element direction from its own text content.
-  function dirOfElement(el) {
+  // Recursive walk that skips .heading-anchor buttons.
+  function dirOfElementDeep(el) {
     for (const n of el.childNodes) {
       if (n.nodeType === 3) {
         const d = dirOfNode(n);
         if (d !== 'neutral') return d;
       }
     }
+    for (const n of el.childNodes) {
+      if (n.nodeType === 1) {
+        if (n.classList && n.classList.contains('heading-anchor')) continue;
+        const d = dirOfElementDeep(n);
+        if (d !== 'neutral') return d;
+      }
+    }
     return 'neutral';
   }
 
-  // Decide the primary document direction (used for <html dir>).
+  function dirOfElement(el) {
+    return dirOfElementDeep(el);
+  }
+
   function detectDocumentDir(text) {
     return firstStrong(text || '') === 'rtl' ? 'rtl' : 'ltr';
   }

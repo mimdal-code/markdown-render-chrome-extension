@@ -3,10 +3,10 @@ name: Release Chrome Extension
 on:
   push:
     tags:
-      - 'v*'  # Triggers when pushing tags like v1.0.0, v1.1.0, etc.
+      - 'v*'
 
 permissions:
-  contents: write  # Required permission to create Release and upload assets
+  contents: write
 
 jobs:
   build-and-release:
@@ -19,16 +19,37 @@ jobs:
         id: get_version
         run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
 
+      - name: Download Vendors
+        run: |
+          echo "Downloading vendor dependencies..."
+          
+          # Chess.js
+          mkdir -p vendor/chess.js/1.4.0
+          curl -sSL "https://cdn.jsdelivr.net/npm/chess.js@1.4.0/dist/cjs/chess.js" -o vendor/chess.js/1.4.0/chess.js
+          curl -sSL "https://raw.githubusercontent.com/jhlywa/chess.js/master/LICENSE" -o vendor/chess.js/1.4.0/LICENSE
+          
+          # Cburnett Pieces
+          mkdir -p vendor/cburnett/1.0.0/pieces
+          BASE_URL="https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett"
+          
+          for piece in wK wQ wR wB wN wP bK bQ bR bB bN bP; do
+            curl -sSL "$BASE_URL/$piece.svg" -o "vendor/cburnett/1.0.0/pieces/$piece.svg"
+          done
+          curl -sSL "$BASE_URL/LICENSE" -o "vendor/cburnett/1.0.0/LICENSE"
+          
+          echo "Vendors downloaded:"
+          ls -R vendor/
+
       - name: Package extension
         run: |
           zip -r "md-rtl-reader-${{ steps.get_version.outputs.VERSION }}.zip" \
-            manifest.json src assets \
+            manifest.json src assets vendor \
             -x '*.DS_Store' '*/node_modules/*' '*/.git/*'
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           files: md-rtl-reader-${{ steps.get_version.outputs.VERSION }}.zip
-          generate_release_notes: true  # Automatically generate release notes
+          generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
