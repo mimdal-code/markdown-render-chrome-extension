@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const DEFAULTS = {
+    const DEFAULTS = {
     theme: 'light',
     dir: 'auto',
     tag: false,
@@ -10,10 +10,11 @@
     width: 'normal',
     headerLangRTL: 'fa',
     headerLangLTR: 'en',
+    chessPieceStyle: 'cburnett',
+    chessBoardStyle: 'cream',
     fontRTL: '"Vazirmatn", "Droid Arabic Naskh", "Noto Naskh Arabic", "Tahoma", sans-serif',
     fontLTR: 'system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif',
   };
-
   const app         = document.querySelector('.app');
   const toolbar     = document.querySelector('.toolbar');
   const sidebar     = document.querySelector('.sidebar');
@@ -282,13 +283,18 @@
   }
 
   /* ---------- Render ---------- */
-  function render(md) {
+    function render(md) {
     currentMarkdown = md || '';
     content.innerHTML = window.MD.render(currentMarkdown);
 
-    // Mount chess blocks (FEN + PGN) from ```chess fenced code blocks
+    // Pass chess settings to the chess renderer
     if (window.ChessBlocks && typeof window.ChessBlocks.mountAll === 'function') {
-      try { window.ChessBlocks.mountAll(content); }
+      try {
+        window.ChessBlocks.mountAll(content, {
+          pieceStyle: settings.chessPieceStyle,
+          boardStyle: settings.chessBoardStyle,
+        });
+      }
       catch (e) { console.warn('[md-rtl] chess mount failed', e); }
     }
 
@@ -312,7 +318,6 @@
       }
     });
   }
-
   /* ---------- Search ---------- */
   let searchMatches = [];
   let searchIndex = -1;

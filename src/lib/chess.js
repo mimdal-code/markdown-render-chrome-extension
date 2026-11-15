@@ -1,5 +1,4 @@
 // Renders ```chess fenced code blocks as interactive chess widgets.
-// Read-only: navigation only (prev/next/flip/jump). No input, no engine.
 (function (global) {
   'use strict';
 
@@ -28,8 +27,9 @@
     146:{ glyph: 'N',   cls: 'nag-novelty',     title: 'Novelty' },
   };
 
-  function mountAll(root) {
+  function mountAll(root, options) {
     if (!root) return;
+    if (options) window.__chessOptions = options;
 
     if (!window.Chess) {
       if (!window.__chessMountQueue) window.__chessMountQueue = [];
@@ -65,9 +65,9 @@
 
   function sanitizeForChessJs(text) {
     return String(text)
-      .replace(/\[[^\]]*\]\s*/g, '')
-      .replace(/#\[[^\]]*\]/g, '')
-      .replace(/\b(1-0|0-1|1\/2-1\/2|\*)\s*$/g, '')
+      .replace(/#\[[^\]]*\]/g, '')         // MUST run first: strip #[caption]
+      .replace(/\[[^\]]*\]\s*/g, '')       // strip standard headers
+      .replace(/\b(1-0|0-1|1\/2-1\/2|\*)\s*$/g, '') // strip result token
       .trim();
   }
 
@@ -84,16 +84,16 @@
       g.loadPgn(text);
       return { kind: 'pgn', pgn: text };
     } catch (e) {
+      const cleaned = sanitizeForChessJs(text);
       try {
-        const cleaned = sanitizeForChessJs(text);
         const g = new (getChessCtor())();
         g.loadPgn(cleaned);
-        return { kind: 'pgn', pgn: text };
+        return { kind: 'pgn', pgn: cleaned }; // return sanitized for parsing
       } catch (e2) {
         try {
           global.ChessFEN.parseFen(text);
           return { kind: 'fen', fen: text };
-        } catch {
+        } catch (e3) {
           return { kind: 'error', error: 'Not a valid FEN or PGN' };
         }
       }
@@ -106,11 +106,12 @@
     return C.Chess || C;
   }
 
+  /* ---------- DOM Helpers ---------- */
   function buildBoardDom(host) {
     host.innerHTML = '';
-    
     const wrap = document.createElement('div');
-    wrap.className = 'chess-board-wrap';
+    const boardStyle = (window.__chessOptions && window.__chessOptions.boardStyle) || 'cream';
+    wrap.className = 'chess-board-wrap board-' + boardStyle;
     
     const ranks = document.createElement('div');
     ranks.className = 'chess-coords-ranks';
@@ -127,7 +128,7 @@
         sq.dataset.file = String(file);
         sq.dataset.rank = String(rank);
         grid.appendChild(sq);
-        squareEls[`${file},${rank}`] = sq;
+        squareEls[file + ',' + rank] = sq;
       }
     }
     
@@ -136,9 +137,11 @@
 
     const boardAndFiles = document.createElement('div');
     boardAndFiles.className = 'chess-board-inner';
-    boardAndFiles.append(grid, files);
+    boardAndFiles.appendChild(grid);
+    boardAndFiles.appendChild(files);
 
-    wrap.append(ranks, boardAndFiles);
+    wrap.appendChild(ranks);
+    wrap.appendChild(boardAndFiles);
     host.appendChild(wrap);
 
     const svgNS = 'http://www.w3.org/2000/svg';
@@ -148,38 +151,33 @@
     svg.setAttribute('preserveAspectRatio', 'none');
     grid.appendChild(svg);
 
-    return { grid, squareEls, svg, ranks, files };
+    return { grid: grid, squareEls: squareEls, svg: svg, ranks: ranks, files: files };
   }
 
   function updateCoordinates(ranksEl, filesEl, orientation) {
     ranksEl.innerHTML = '';
     filesEl.innerHTML = '';
-    
     const rankStr = orientation === 'w' ? '87654321' : '12345678';
     const fileStr = orientation === 'w' ? 'abcdefgh' : 'hgfedcba';
-    
     for (let i = 0; i < 8; i++) {
-      const r = document.createElement('span');
-      r.textContent = rankStr[i];
-      ranksEl.appendChild(r);
-      
-      const f = document.createElement('span');
-      f.textContent = fileStr[i];
-      filesEl.appendChild(f);
+      const r = document.createElement('span'); r.textContent = rankStr[i]; ranksEl.appendChild(r);
+      const f = document.createElement('span'); f.textContent = fileStr[i]; filesEl.appendChild(f);
     }
   }
 
   function renderPosition(boardEl, grid, squareEls, sideToMove, orientation) {
-    for (const k of Object.keys(squareEls)) squareEls[k].innerHTML = '';
-    
+    for (const k in squareEls) squareEls[k].innerHTML = '';
+
     const wrap = boardEl.querySelector('.chess-board-wrap');
     if (wrap) {
-       updateCoordinates(
-         wrap.querySelector('.chess-coords-ranks'), 
-         wrap.querySelector('.chess-coords-files'), 
-         orientation
-       );
+      updateCoordinates(
+        wrap.querySelector('.chess-coords-ranks'),
+        wrap.querySelector('.chess-coords-files'),
+        orientation
+      );
     }
+
+    const pieceStyle = (window.__chessOptions && window.__chessOptions.pieceStyle) || 'cburnett';
 
     for (let r = 0; r < 8; r++) {
       for (let f = 0; f < 8; f++) {
@@ -188,12 +186,10 @@
         const rank = 7 - r;
         const visualRank = orientation === 'w' ? rank : 7 - rank;
         const visualFile = orientation === 'w' ? f : 7 - f;
-        const cell = squareEls[`${visualFile},${visualRank}`];
-        
-      if (cell) {
+        const cell = squareEls[visualFile + ',' + visualRank];
+        if (cell) {
           const img = document.createElement('img');
-          // Point to the new versioned vendor path
-          img.src = chrome.runtime.getURL('vendor/cburnett/1.0.0/pieces/' + PIECE_FILES[piece]);
+          img.src = chrome.runtime.getURL('vendor/' + pieceStyle + '/1.0.0/pieces/' + PIECE_FILES[piece]);
           img.className = 'chess-piece';
           img.draggable = false;
           img.setAttribute('aria-hidden', 'true');
@@ -246,12 +242,10 @@
       const endY = to.y - uy * 0.3;
 
       let defs = svg.querySelector('defs');
-      if (!defs) {
-        defs = document.createElementNS(ns, 'defs');
-        svg.appendChild(defs);
-      }
-      const markerId = `arrowhead-${a.color}`;
-      if (!svg.querySelector(`#${markerId}`)) {
+      if (!defs) { defs = document.createElementNS(ns, 'defs'); svg.appendChild(defs); }
+      
+      const markerId = 'arrowhead-' + a.color;
+      if (!svg.querySelector('#' + markerId)) {
         const marker = document.createElementNS(ns, 'marker');
         marker.setAttribute('id', markerId);
         marker.setAttribute('markerWidth', '4');
@@ -274,7 +268,7 @@
       line.setAttribute('stroke', stroke);
       line.setAttribute('stroke-width', '0.12');
       line.setAttribute('stroke-linecap', 'round');
-      line.setAttribute('marker-end', `url(#${markerId})`);
+      line.setAttribute('marker-end', 'url(#' + markerId + ')');
       svg.appendChild(line);
     }
   }
@@ -306,12 +300,11 @@
 
   function mountPgnBlock(host, raw) {
     const Game = getChessCtor();
-
     let cleanPgn = raw;
     try {
       const test = new Game();
       test.loadPgn(cleanPgn);
-    } catch {
+    } catch (e) {
       cleanPgn = sanitizeForChessJs(raw);
     }
 
@@ -321,6 +314,8 @@
 
     const startFen = allMoves.length > 0 ? allMoves[0].before : DEFAULT_START_FEN;
     const startParsed = global.ChessFEN.parseFen(startFen);
+    
+    // Extract from ORIGINAL raw text to preserve #[...] and [%cal]
     const commentsByMove = extractCommentsByMove(raw);
 
     const positions = [{ grid: startParsed.grid, side: startParsed.side }];
@@ -350,54 +345,46 @@
     let board;
     let barEl, prevBtn, nextBtn, moveListEl, cardEls;
 
-       function refresh() {
+    function refresh() {
       const pos = positions[ply];
       renderPosition(boardEl, pos.grid, board.squareEls, pos.side, orientation);
 
       const annot = ply > 0 ? moves[ply - 1].annotation : { arrows: [], highlights: [] };
       drawOverlay(board.svg, annot, orientation);
 
-      // Highlight the last move
       highlightLastMove(ply);
-
       updateCards();
       updateMoveList();
       updateControls();
     }
 
     function highlightLastMove(currentPly) {
-      // Clear any existing highlights
-      board.squareEls && Object.values(board.squareEls).forEach(sq => {
-        sq.classList.remove('last-move-from', 'last-move-to');
-      });
-
+      for (const k in board.squareEls) {
+        board.squareEls[k].classList.remove('last-move-from', 'last-move-to');
+      }
       if (currentPly === 0) return;
-
       const m = moves[currentPly - 1];
       if (!m) return;
-
-      const parseSquare = (sq) => {
-        const file = 'abcdefgh'.indexOf(sq[0]);
-        const rank = parseInt(sq[1], 10) - 1;
-        return { file, rank };
-      };
-
+      
+      const parseSquare = (sq) => ({
+        file: 'abcdefgh'.indexOf(sq[0]),
+        rank: parseInt(sq[1], 10) - 1
+      });
       const from = parseSquare(m.from);
       const to = parseSquare(m.to);
 
       const getVisualCoords = (f, r) => {
         const vf = orientation === 'w' ? f : 7 - f;
         const vr = orientation === 'w' ? r : 7 - r;
-        return `${vf},${vr}`;
+        return vf + ',' + vr;
       };
 
       const fromKey = getVisualCoords(from.file, from.rank);
       const toKey = getVisualCoords(to.file, to.rank);
-
       if (board.squareEls[fromKey]) board.squareEls[fromKey].classList.add('last-move-from');
       if (board.squareEls[toKey]) board.squareEls[toKey].classList.add('last-move-to');
     }
-    
+
     function findLastMove(color) {
       for (let i = ply - 1; i >= 0; i--) {
         if (moves[i].color === color) return moves[i];
@@ -419,8 +406,9 @@
         return;
       }
       const moveNum = Math.ceil(move.ply / 2);
-      headEl.textContent = `${color === 'w' ? 'WHITE' : 'BLACK'} · move ${moveNum}`;
+      headEl.textContent = (color === 'w' ? 'WHITE' : 'BLACK') + ' · move ' + moveNum;
       sanEl.textContent = move.san;
+      
       const nag = move.annotation.nag;
       if (nag && NAG_GLYPHS[nag]) {
         nagEl.textContent = NAG_GLYPHS[nag].glyph;
@@ -439,9 +427,8 @@
     }
 
     function updateMoveList() {
-      moveListEl.querySelectorAll('.chess-move').forEach((el, idx) => {
-        el.classList.toggle('active', idx + 1 === ply);
-      });
+      const els = moveListEl.querySelectorAll('.chess-move');
+      els.forEach((el, idx) => el.classList.toggle('active', idx + 1 === ply));
     }
 
     function updateControls() {
@@ -453,7 +440,7 @@
         const m = moves[ply - 1];
         san.textContent = (m.color === 'w' ? Math.ceil(m.ply / 2) + '. ' : Math.ceil(m.ply / 2) + '… ') + m.san;
       }
-      counter.textContent = `${ply} / ${moves.length}`;
+      counter.textContent = ply + ' / ' + moves.length;
       prevBtn.disabled = ply === 0;
       nextBtn.disabled = ply === moves.length;
     }
@@ -495,8 +482,7 @@
       const m = document.createElement('span');
       m.className = 'chess-move';
       const num = Math.ceil(mv.ply / 2);
-      const prefix = mv.color === 'w' ? num + '. ' : num + '… ';
-      m.textContent = prefix + mv.san;
+      m.textContent = (mv.color === 'w' ? num + '. ' : num + '… ') + mv.san;
       if (mv.annotation.nag && NAG_GLYPHS[mv.annotation.nag]) {
         const g = document.createElement('span');
         g.className = 'chess-move-nag ' + NAG_GLYPHS[mv.annotation.nag].cls;
@@ -549,12 +535,20 @@
   function tokenizePgn(raw) {
     const tokens = [];
     let s = String(raw);
+    
+    // 1. Convert ChessBase #[caption] markers into PGN comments
     s = s.replace(/#\[([^\]]*)\]/g, '{**$1**}');
+    
+    // 2. Strip standard PGN headers
     s = s.replace(/\[[^\]]*\]\s*/g, '');
+    
+    // 3. Strip variations
     let guard = 0;
     while (/\([^()]*\)/.test(s) && guard++ < 50) {
       s = s.replace(/\([^()]*\)/g, ' ');
     }
+    
+    // 4. Tokenize
     const re = /\{([^}]*)\}|\$(\d+)|\b([a-hRNBQK][^\s{}]*)\b|\b(1-0|0-1|1\/2-1\/2|\*)\b/g;
     let m;
     while ((m = re.exec(s))) {

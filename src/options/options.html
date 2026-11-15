@@ -72,6 +72,36 @@
   }
   .save:hover { filter: brightness(1.08); }
   .status { color: var(--ok); font-size: 12px; margin-inline-start: 8px; }
+
+  /* Live Preview Board */
+  .preview-board-wrap {
+    display: grid;
+    grid-template-columns: 14px 1fr;
+    gap: 4px;
+    max-width: 220px;
+    margin: 10px auto;
+    background: #f7e7ce;
+    padding: 8px;
+    border: 1px solid #8b7d6b;
+  }
+  .preview-board-inner { display: flex; flex-direction: column; gap: 2px; }
+  .preview-grid {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    grid-template-rows: repeat(8, 1fr);
+    border: 1px solid #8b7d6b;
+    background: #f0dfc0;
+  }
+  .preview-sq { position: relative; }
+  .preview-sq img { position: absolute; inset: 5%; width: 90%; height: 90%; object-fit: contain; }
+  .preview-ranks, .preview-files {
+    display: flex; justify-content: space-around; align-items: center;
+    font-family: Georgia, serif; font-size: 9px; color: #4a4a4a;
+  }
+  .preview-ranks { flex-direction: column; }
 </style>
 </head>
 <body>
@@ -115,6 +145,40 @@
         <option value="narrow" data-i18n="width_narrow">Narrow (620px)</option>
         <option value="normal" data-i18n="width_normal">Normal (860px)</option>
         <option value="wide" data-i18n="width_wide">Wide (95%)</option>
+      </select>
+    </div>
+    
+    <!-- LIVE PREVIEW -->
+    <div class="row" style="flex-direction: column; align-items: stretch;">
+      <div class="preview-board-wrap" id="previewWrap">
+        <div class="preview-ranks" id="previewRanks"></div>
+        <div class="preview-board-inner">
+          <div class="preview-grid" id="previewGrid"></div>
+          <div class="preview-files" id="previewFiles"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <label>
+        <strong data-i18n="chess_piece_style">Chess piece style</strong>
+      </label>
+      <select id="chessPieceStyle">
+        <option value="cburnett" data-i18n="chess_piece_classic">Classic (Cburnett)</option>
+        <option value="merida" data-i18n="chess_piece_merida">Merida (White Border)</option>
+        <option value="maestro" data-i18n="chess_piece_maestro">Maestro</option>
+      </select>
+    </div>
+    <div class="row">
+      <label>
+        <strong data-i18n="chess_board_style">Chess board style</strong>
+      </label>
+      <select id="chessBoardStyle">
+        <option value="cream" data-i18n="chess_board_cream">Cream Stripes</option>
+        <option value="green" data-i18n="chess_board_green">Green</option>
+        <option value="brown" data-i18n="chess_board_brown">Classic Wood</option>
+        <option value="blue" data-i18n="chess_board_blue">Blue</option>
+        <option value="dark" data-i18n="chess_board_dark">High Contrast (Dark)</option>
       </select>
     </div>
     <div class="row">

@@ -56,7 +56,17 @@
     "help_title": "Keyboard shortcuts",
     "help_body": "Ctrl+B — toggle sidebar\nCtrl+F — focus search\nEnter — next match\nShift+Enter — previous match\nEsc — clear search\n? — this help",
     "options_title": "Markdown RTL/LTR — Options",
-    "options_lead": "These settings apply to the viewer on every page. They are stored in chrome.storage.sync."
+    "options_lead": "These settings apply to the viewer on every page. They are stored in chrome.storage.sync.",
+    "chess_piece_style": "Chess piece style",
+    "chess_board_style": "Chess board style",
+    "chess_piece_classic": "Classic (Cburnett)",
+    "chess_piece_merida": "Merida (White Border)",
+    "chess_piece_maestro": "Maestro",
+    "chess_board_cream": "Cream Stripes",
+    "chess_board_green": "Green",
+    "chess_board_brown": "Classic Wood",
+    "chess_board_blue": "Blue",
+    "chess_board_dark": "High Contrast (Dark)"
   },
   "fa": {
     "dir": "rtl",
@@ -115,7 +125,17 @@
     "help_title": "کلیدهای میانبر",
     "help_body": "Ctrl+B — نمایش/پنهان کردن نوار کناری\nCtrl+F — جستجو\nEnter — مطابقت بعدی\nShift+Enter — مطابقت قبلی\nEsc — پاک کردن جستجو\n؟ — این راهنما",
     "options_title": "Markdown RTL/LTR — تنظیمات",
-    "options_lead": "این تنظیمات روی نمایشگر در همهٔ صفحات اعمال می‌شود و در chrome.storage.sync ذخیره می‌شود."
+    "options_lead": "این تنظیمات روی نمایشگر در همهٔ صفحات اعمال می‌شود و در chrome.storage.sync ذخیره می‌شود.",
+    "chess_piece_style": "Chess piece style",
+    "chess_board_style": "Chess board style",
+    "chess_piece_classic": "Classic (Cburnett)",
+    "chess_piece_merida": "Merida (White Border)",
+    "chess_piece_maestro": "Maestro",
+    "chess_board_cream": "Cream Stripes",
+    "chess_board_green": "Green",
+    "chess_board_brown": "Classic Wood",
+    "chess_board_blue": "Blue",
+    "chess_board_dark": "High Contrast (Dark)"
   },
   "ar": {
     "dir": "rtl",
@@ -174,7 +194,17 @@
     "help_title": "اختصارات لوحة المفاتيح",
     "help_body": "Ctrl+B — إظهار/إخفاء الشريط الجانبي\nCtrl+F — البحث\nEnter — المطابقة التالية\nShift+Enter — المطابقة السابقة\nEsc — مسح البحث\n؟ — هذه المساعدة",
     "options_title": "Markdown RTL/LTR — الإعدادات",
-    "options_lead": "تُطبق هذه الإعدادات على العارض في كل صفحة وتُحفظ في chrome.storage.sync."
+    "options_lead": "تُطبق هذه الإعدادات على العارض في كل صفحة وتُحفظ في chrome.storage.sync.",
+    "chess_piece_style": "Chess piece style",
+    "chess_board_style": "Chess board style",
+    "chess_piece_classic": "Classic (Cburnett)",
+    "chess_piece_merida": "Merida (White Border)",
+    "chess_piece_maestro": "Maestro",
+    "chess_board_cream": "Cream Stripes",
+    "chess_board_green": "Green",
+    "chess_board_brown": "Classic Wood",
+    "chess_board_blue": "Blue",
+    "chess_board_dark": "High Contrast (Dark)"
   },
   "he": {
     "dir": "rtl",
@@ -233,6 +263,16 @@
     "help_title": "קיצורי מקלדת",
     "help_body": "Ctrl+B — הצג/הסתר סרגל צד\nCtrl+F — חיפוש\nEnter — התאמה הבאה\nShift+Enter — התאמה קודמת\nEsc — נקה חיפוש\n? — עזרה זו",
     "options_title": "Markdown RTL/LTR — אפשרויות",
-    "options_lead": "הגדרות אלו חלות על הצפייה בכל עמוד ונשמרות ב-chrome.storage.sync."
+    "options_lead": "הגדרות אלו חלות על הצפייה בכל עמוד ונשמרות ב-chrome.storage.sync.",
+    "chess_piece_style": "Chess piece style",
+    "chess_board_style": "Chess board style",
+    "chess_piece_classic": "Classic (Cburnett)",
+    "chess_piece_merida": "Merida (White Border)",
+    "chess_piece_maestro": "Maestro",
+    "chess_board_cream": "Cream Stripes",
+    "chess_board_green": "Green",
+    "chess_board_brown": "Classic Wood",
+    "chess_board_blue": "Blue",
+    "chess_board_dark": "High Contrast (Dark)"
   }
 }
