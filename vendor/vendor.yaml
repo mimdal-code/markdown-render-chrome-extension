@@ -30,3 +30,35 @@ dependencies:
       # License
       - source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/cburnett/LICENSE"
         dest: "vendor/cburnett/1.0.0/LICENSE"
+        
+  merida:
+    version: "1.0.0"
+    files:
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/merida/wK.svg", dest: "vendor/merida/1.0.0/pieces/wK.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/merida/wQ.svg", dest: "vendor/merida/1.0.0/pieces/wQ.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/merida/wR.svg", dest: "vendor/merida/1.0.0/pieces/wR.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/merida/wB.svg", dest: "vendor/merida/1.0.0/pieces/wB.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/merida/wN.svg", dest: "vendor/merida/1.0.0/pieces/wN.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/merida/wP.svg", dest: "vendor/merida/1.0.0/pieces/wP.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/merida/bK.svg", dest: "vendor/merida/1.0.0/pieces/bK.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/merida/bQ.svg", dest: "vendor/merida/1.0.0/pieces/bQ.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/merida/bR.svg", dest: "vendor/merida/1.0.0/pieces/bR.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/merida/bB.svg", dest: "vendor/merida/1.0.0/pieces/bB.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/merida/bN.svg", dest: "vendor/merida/1.0.0/pieces/bN.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/merida/bP.svg", dest: "vendor/merida/1.0.0/pieces/bP.svg" }
+
+  maestro:
+    version: "1.0.0"
+    files:
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/maestro/wK.svg", dest: "vendor/maestro/1.0.0/pieces/wK.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/maestro/wQ.svg", dest: "vendor/maestro/1.0.0/pieces/wQ.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/maestro/wR.svg", dest: "vendor/maestro/1.0.0/pieces/wR.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/maestro/wB.svg", dest: "vendor/maestro/1.0.0/pieces/wB.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/maestro/wN.svg", dest: "vendor/maestro/1.0.0/pieces/wN.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/maestro/wP.svg", dest: "vendor/maestro/1.0.0/pieces/wP.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/maestro/bK.svg", dest: "vendor/maestro/1.0.0/pieces/bK.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/maestro/bQ.svg", dest: "vendor/maestro/1.0.0/pieces/bQ.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/maestro/bR.svg", dest: "vendor/maestro/1.0.0/pieces/bR.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/maestro/bB.svg", dest: "vendor/maestro/1.0.0/pieces/bB.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/maestro/bN.svg", dest: "vendor/maestro/1.0.0/pieces/bN.svg" }
+      - { source: "https://raw.githubusercontent.com/lichess-org/lila/master/public/piece/maestro/bP.svg", dest: "vendor/maestro/1.0.0/pieces/bP.svg" }

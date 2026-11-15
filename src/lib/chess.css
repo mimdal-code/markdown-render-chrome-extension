@@ -217,21 +217,45 @@
 .nag-black-winning { color: #6d28d9; }
 .nag-novelty       { color: #0891b2; }
 
-.chess-square.light { 
-  background: #f0dfc0; 
+/* ---------- Board Styles (Shared by Viewer & Preview) ---------- */
+
+.board-cream { background: #f7e7ce; border-color: #8b7d6b; }
+.board-cream .chess-board-grid, .board-cream .preview-grid { background: #f0dfc0; border-color: #8b7d6b; }
+.board-cream .chess-square.light, .board-cream .preview-sq.light { background: #f0dfc0; }
+.board-cream .chess-square.dark, .board-cream .preview-sq.dark { 
+  background: repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(0, 0, 0, 0.4) 4px, rgba(0, 0, 0, 0.4) 6px), #f0dfc0; 
 }
 
-/* Thinner, finer diagonal hash marks */
-.chess-square.dark { 
-  background: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 4px,
-    rgba(0, 0, 0, 0.4) 4px,
-    rgba(0, 0, 0, 0.4) 6px
-  ), #f0dfc0;
-}
+.board-green { background: #2a2a2a; border-color: #111; }
+.board-green .chess-board-grid, .board-green .preview-grid { border-color: #111; }
+.board-green .chess-square.light, .board-green .preview-sq.light { background: #eeeed2; }
+.board-green .chess-square.dark, .board-green .preview-sq.dark { background: #769656; }
 
+.board-brown { background: #d6b48c; border-color: #5c4033; }
+.board-brown .chess-board-grid, .board-brown .preview-grid { border-color: #5c4033; }
+.board-brown .chess-square.light, .board-brown .preview-sq.light { background: #f0d9b5; }
+.board-brown .chess-square.dark, .board-brown .preview-sq.dark { background: #b58863; }
+
+.board-blue { background: #1e3a8a; border-color: #0f172a; }
+.board-blue .chess-board-grid, .board-blue .preview-grid { border-color: #0f172a; }
+.board-blue .chess-square.light, .board-blue .preview-sq.light { background: #dee3e6; }
+.board-blue .chess-square.dark, .board-blue .preview-sq.dark { background: #8ca2ad; }
+
+.board-dark { background: #121212; border-color: #333; }
+.board-dark .chess-board-grid, .board-dark .preview-grid { border-color: #333; }
+.board-dark .chess-square.light, .board-dark .preview-sq.light { background: #404040; }
+.board-dark .chess-square.dark, .board-dark .preview-sq.dark { background: #1a1a1a; }
+.board-dark .chess-coords-ranks, .board-dark .chess-coords-files, 
+.board-dark .preview-ranks, .board-dark .preview-files { color: #aaa; }
+
+/* Theme overrides for Cream */
+html[data-theme="dark"] .board-cream { background: #2a2a2a; border-color: #111; }
+html[data-theme="dark"] .board-cream .chess-board-grid, 
+html[data-theme="dark"] .board-cream .preview-grid { border-color: #111; }
+html[data-theme="dark"] .board-cream .chess-coords-ranks, 
+html[data-theme="dark"] .board-cream .chess-coords-files,
+html[data-theme="dark"] .board-cream .preview-ranks,
+html[data-theme="dark"] .board-cream .preview-files { color: #aaa; }
 /* 
   Pieces are absolutely positioned so they never affect 
   the grid size or cause layout jitter.
@@ -261,28 +285,7 @@ html[data-theme="dark"] .chess-board-wrap { background: #2a2a2a; border-color: #
 html[data-theme="dark"] .chess-board-grid { border-color: #111; background: #4a4a4a; }
 html[data-theme="dark"] .chess-coords-ranks,
 html[data-theme="dark"] .chess-coords-files { color: #aaa; }
-html[data-theme="dark"] .chess-square.light { background: #4a4a4a; }
-html[data-theme="dark"] .chess-square.dark { 
-  background: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 4px,
-    rgba(255, 255, 255, 0.25) 4px,
-    rgba(255, 255, 255, 0.25) 6px
-  ), #4a4a4a;
-}
 
-/* ---------- Sepia Theme Overrides ---------- */
-html[data-theme="sepia"] .chess-square.light { background: #f2e1c1; }
-html[data-theme="sepia"] .chess-square.dark { 
-  background: repeating-linear-gradient(
-    45deg,
-    transparent,
-    transparent 4px,
-    rgba(0, 0, 0, 0.35) 4px,
-    rgba(0, 0, 0, 0.35) 6px
-  ), #f2e1c1;
-}
 
 /* ---------- Narrow layout ---------- */
 @media (max-width: 700px) {
@@ -328,4 +331,46 @@ html[data-theme="sepia"] .chess-square.last-move-from::after {
 }
 html[data-theme="sepia"] .chess-square.last-move-to::after {
   background: rgba(255, 180, 0, 0.5);
+}
+
+/* 
+   Fix pieces on the High Contrast Dark board.
+   - White pieces stay bright.
+   - Black pieces become a mid-grey (inverted but kept dark enough to contrast).
+*/
+
+/* Black pieces: invert to make them light grey, but keep contrast */
+.board-dark .chess-piece[src*="bK"],
+.board-dark .chess-piece[src*="bQ"],
+.board-dark .chess-piece[src*="bR"],
+.board-dark .chess-piece[src*="bB"],
+.board-dark .chess-piece[src*="bN"],
+.board-dark .chess-piece[src*="bP"],
+.board-dark .preview-sq img[src*="bK"],
+.board-dark .preview-sq img[src*="bQ"],
+.board-dark .preview-sq img[src*="bR"],
+.board-dark .preview-sq img[src*="bB"],
+.board-dark .preview-sq img[src*="bN"],
+.board-dark .preview-sq img[src*="bP"] {
+  /* 
+     Invert makes black -> white.
+     Then we darken it to 0.7 so it becomes mid-grey instead of blinding white.
+  */
+  filter: invert(1) brightness(0.7) contrast(1.2);
+}
+
+/* White pieces: keep them bright and crisp */
+.board-dark .chess-piece[src*="wK"],
+.board-dark .chess-piece[src*="wQ"],
+.board-dark .chess-piece[src*="wR"],
+.board-dark .chess-piece[src*="wB"],
+.board-dark .chess-piece[src*="wN"],
+.board-dark .chess-piece[src*="wP"],
+.board-dark .preview-sq img[src*="wK"],
+.board-dark .preview-sq img[src*="wQ"],
+.board-dark .preview-sq img[src*="wR"],
+.board-dark .preview-sq img[src*="wB"],
+.board-dark .preview-sq img[src*="wN"],
+.board-dark .preview-sq img[src*="wP"] {
+  filter: brightness(1.2) contrast(1.2);
 }
